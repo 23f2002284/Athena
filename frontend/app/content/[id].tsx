@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { api, EducationalContent } from '@/services/api';
+import { ThemedText } from '../../components/ThemedText.js';
+import { ThemedView } from '../../components/ThemedView.js';
+import { api, EducationalContent } from '../../services/api.js';
 
 export default function ContentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

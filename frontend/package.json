@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "name": "athena-misinfo-verifier",
   "displayName": "Athena Misinfo Verifier",
   "main": "expo-router/entry",

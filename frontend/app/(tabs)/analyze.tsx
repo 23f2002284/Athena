@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, Button, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { api } from '@/services/api';
-import { ResultCard } from '@/components/ResultCard';
+import { ThemedText } from '../../components/ThemedText.js';
+import { ThemedView } from '../../components/ThemedView.js';
+import { api } from '../../services/api.js';
+import { ResultCard } from '../../components/ResultCard.js';
 
 export default function AnalyzeScreen() {
   const [text, setText] = useState('');

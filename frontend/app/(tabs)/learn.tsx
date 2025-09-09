@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, SafeAreaView, StyleSheet } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { api, EducationalContent } from '@/services/api';
-import { ContentCard } from '@/components/ContentCard';
+import { ThemedText } from '../../components/ThemedText.js';
+import { api, EducationalContent } from '../../services/api.js';
+import { ContentCard } from '../../components/ContentCard.js';
 import { Link } from 'expo-router';
 
 export default function LearnScreen() {
