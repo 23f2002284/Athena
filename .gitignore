@@ -5,3 +5,7 @@ logs
 claim_verification_result.json
 fact_checker.log
 main.ipynb
+node_modules
+.vscode
+.expo
+expo-env.d.ts

@@ -3,6 +3,7 @@ from fact_checker.agent import graph as generate_report_graph
 from typing import Dict, Any
 from educational_tool.schemas import State
 import logging
+from datetime import datetime
 logger = logging.getLogger(__name__)
 async def extract_fact_checking_report_node(state: State)-> Dict[str, Any]:
     """ Extract report from the answer text thorugh fact checking graph
