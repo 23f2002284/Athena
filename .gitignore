@@ -1,0 +1,7 @@
+.env
+__pycache__
+logs
+.json
+claim_verification_result.json
+fact_checker.log
+main.ipynb
