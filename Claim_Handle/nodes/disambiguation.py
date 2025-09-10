@@ -140,8 +140,16 @@ async def disambiguation_node(state: State) -> Dict[str, List[DisambiguatedConte
     )
 
     if not disambiguated_contents:
-        logger.info("Nothing could be disambiguated")
-        return {}
+        # Fallback: pass through selected contents as already clear enough
+        logger.info("Nothing could be disambiguated; passing through selected contents as-is")
+        return {
+            "disambiguated_contents": [
+                _create_disambiguated_content(
+                    selected_item.processed_sentence, selected_item
+                )
+                for selected_item in selected_contents
+            ]
+        }
 
     logger.info(
         f"Successfully disambiguated {len(disambiguated_contents)} of {len(selected_contents)} items"

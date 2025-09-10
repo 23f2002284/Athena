@@ -4,13 +4,13 @@ from dotenv import load_dotenv
 from langgraph.graph import END, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from fact_checker.nodes import (
+from .nodes import (
     claim_verifier_node,
     dispatch_claims_for_verification,
     extract_claims,
     generate_report_node,
 )
-from fact_checker.schemas import State
+from .schemas import State
     
 
 load_dotenv()

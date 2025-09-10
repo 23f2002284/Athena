@@ -1,0 +1,78 @@
+{
+    "health": [
+      "who.int",
+      "cdc.gov", 
+      "fda.gov",
+      "nih.gov",
+      "mohfw.gov.in"
+    ],
+    "finance_markets": [
+      "sebi.gov.in",
+      "sec.gov",
+      "rbi.org.in",
+      "federalreserve.gov",
+      "ecb.europa.eu"
+    ],
+    "climate_environment": [
+      "ipcc.ch",
+      "noaa.gov",
+      "nasa.gov",
+      "epa.gov",
+      "unfccc.int"
+    ],
+    "elections_democracy": [
+      "eci.gov.in",
+      "fec.gov",
+      "elections.ca",
+      "aec.gov.au"
+    ],
+    "economics_trade": [
+      "wto.org",
+      "imf.org",
+      "worldbank.org",
+      "oecd.org",
+      "bea.gov"
+    ],
+    "technology_standards": [
+      "ieee.org",
+      "w3.org",
+      "iso.org",
+      "nist.gov"
+    ],
+    "legal_judicial": [
+      "supremecourt.gov",
+      "echr.coe.int",
+      "icj-cij.org"
+    ],
+    "statistics_census": [
+      "census.gov",
+      "mospi.gov.in",
+      "ons.gov.uk",
+      "destatis.de"
+    ],
+    "international_relations": [
+      "un.org",
+      "state.gov",
+      "mea.gov.in",
+      "consilium.europa.eu"
+    ],
+    "science_research": [
+      "nature.com",
+      "science.org",
+      "pubmed.ncbi.nlm.nih.gov",
+      "arxiv.org"
+    ],
+    "food_safety": [
+      "fssai.gov.in",
+      "fda.gov",
+      "efsa.europa.eu",
+      "codexalimentarius.org"
+    ],
+    "aviation_transport": [
+      "faa.gov",
+      "icao.int",
+      "dgca.gov.in",
+      "easa.europa.eu"
+    ]
+  }
+  

@@ -1,16 +1,21 @@
-"""Retrieve evidence node - fetches evidence for claims using Exa AI Search.
+"""Retrieve evidence node - fetches evidence for claims using web search providers.
 
-Uses search queries to retrieve relevant evidence snippets from the web using neural search.
+Supports Google Programmable Search via LangChain GoogleSearchAPIWrapper, Exa, and Tavily.
 """
 
 import logging
 from typing import Any, Dict, List
 
-from langchain_exa import ExaSearchRetriever
-from langchain_tavily import TavilySearch
+"""Note: we import Google wrapper lazily inside the method to avoid heavy imports
+when claim verification is not being run, and to reduce pydantic compatibility
+risks in environments where versions differ.
+"""
 
 from Claim_Verification.Config.nodes import EVIDENCE_RETRIEVAL_CONFIG
 from Claim_Verification.schemas import ClaimVerifierState, Evidence
+from utils.settings import settings
+import json
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +26,33 @@ SEARCH_PROVIDER = EVIDENCE_RETRIEVAL_CONFIG["search_provider"]
 
 class SearchProviders:
     @staticmethod
+    def _load_reliable_sources() -> Dict[str, List[str]]:
+        try:
+            path = Path("reliable_sources.json")
+            if not path.exists():
+                return {}
+            return json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+
+    @staticmethod
+    def _build_biased_query(query: str) -> str:
+        reliable = SearchProviders._load_reliable_sources()
+        if not reliable:
+            return query
+        domains: List[str] = []
+        for group in reliable.values():
+            for d in group:
+                if d not in domains:
+                    domains.append(d)
+        # Limit the size to avoid overly long queries
+        domains = domains[:10]
+        sites_clause = " OR ".join([f"site:{d}" for d in domains])
+        if not sites_clause:
+            return query
+        # Soft bias: keep original query OR a clause limited to reliable sites
+        return f"{query} OR ({sites_clause})"
+    """@staticmethod
     async def exa(query: str) -> List[Evidence]:
         logger.info(f"Searching with Exa: '{query}'")
 
@@ -42,7 +74,6 @@ class SearchProviders:
                 for doc in results
             ]
 
-            logger.info(f"Retrieved {len(evidence)} evidence items")
             return evidence
 
         except Exception as e:
@@ -63,7 +94,6 @@ class SearchProviders:
             results = await search.ainvoke(query)
             evidence = SearchProviders._parse_tavily_results(results)
 
-            logger.info(f"Retrieved {len(evidence)} evidence items")
             return evidence
 
         except Exception as e:
@@ -86,11 +116,38 @@ class SearchProviders:
             case str():
                 return [Evidence(url="", text=results, title="Tavily Search Result")]
             case _:
-                return []
+                return []"""
+
+    @staticmethod
+    async def google(query: str) -> List[Evidence]:
+        try:
+            from langchain_google_community.search import GoogleSearchAPIWrapper
+            api_key = settings.google_search_api_key if settings.google_search_api_key else None
+            cse_id = settings.google_cse_id
+            wrapper = GoogleSearchAPIWrapper(
+                google_api_key=api_key,
+                google_cse_id=cse_id,
+                k=RESULTS_PER_QUERY,
+            )
+            # Wrapper.run returns a string, results returns list of dicts
+            biased_query = SearchProviders._build_biased_query(query)
+            raw_results = wrapper.results(query=biased_query, num_results=RESULTS_PER_QUERY)
+            evidence: List[Evidence] = []
+            for r in raw_results:
+                url = r.get("link", "")
+                title = r.get("title")
+                snippet = r.get("snippet") or ""
+                evidence.append(Evidence(url=url, title=title, text=snippet))
+            return evidence
+        except Exception as e:
+            logger.error(f"Google search failed for '{query}': {e}")
+            return []
 
 
 async def _search_query(query: str) -> List[Evidence]:
     match SEARCH_PROVIDER.lower():
+        case "google":
+            return await SearchProviders.google(query)
         case "tavily":
             return await SearchProviders.tavily(query)
         case _:
@@ -105,6 +162,7 @@ async def retrieve_evidence_node(
         return {"evidence": []}
 
     evidence = await _search_query(state.query)
-    logger.info(f"Retrieved {len(evidence)} total evidence snippets")
+    sources = ", ".join([item.url for item in evidence if item.url])
+    logger.info(f"Retrieved {len(evidence)} evidence snippets. Sources: {sources}")
 
     return {"evidence": [item.model_dump() for item in evidence]}

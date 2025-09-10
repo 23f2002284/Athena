@@ -35,16 +35,6 @@ class DisambiguatedContent(BaseModel):
         description="Reference to the original selected content"
     )
 
-class DisambiguatedContent(BaseModel):
-    """Content with pronoun references and ambiguities resolved."""
-
-    disambiguated_sentence: str = Field(
-        description="Sentence with ambiguities resolved"
-    )
-    original_selected_item: SelectedContent = Field(
-        description="Reference to the original selected content"
-    )
-
 class PotentialClaim(BaseModel):
     """A factual claim extracted from disambiguated content."""
 

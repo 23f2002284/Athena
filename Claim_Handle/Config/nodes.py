@@ -13,13 +13,13 @@ CONTEXT_WINDOWS = {
     },
 }
 SELECTION_CONFIG = {
-    "completions": 3,
-    "min_successes": 2,
+    "completions": 2,
+    "min_successes": 1,
     "temperature": 0.2,  # Higher temp for diverse judgments
 }
 DISAMBIGUATION_CONFIG = {
-    "completions": 3,
-    "min_successes": 2,
+    "completions": 2,
+    "min_successes": 1,
     "temperature": 0.2,  # Higher temp for diverse judgments
 }
 DECOMPOSITION_CONFIG = {
