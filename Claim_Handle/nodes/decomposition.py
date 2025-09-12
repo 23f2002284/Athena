@@ -6,9 +6,13 @@ Breaks complex sentences into simple, standalone factual claims.
 import asyncio
 import itertools
 import logging
-from typing import Dict, List
+from typing import Dict, List, Optional
 
+from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
+
+# Load environment first
+import load_env
 
 from Claim_Handle.Config.nodes import DECOMPOSITION_CONFIG
 from Claim_Handle.prompts import DECOMPOSITION_SYSTEM_PROMPT, HUMAN_PROMPT
