@@ -8,9 +8,6 @@ from typing import Dict, List, Optional, Tuple
 
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
-
-# Load environment first
-import load_env
 from utils import call_llm_with_structured_output, get_llm, process_with_voting
 
 from Claim_Handle.Config.nodes import SELECTION_CONFIG

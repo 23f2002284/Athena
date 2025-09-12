@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     google_cse_id: Optional[str] = Field(default=None, alias="GOOGLE_CSE_ID")
 
     model_config = SettingsConfigDict(
-        env_file=["config.env"],
+        env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=True,

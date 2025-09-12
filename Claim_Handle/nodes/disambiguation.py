@@ -6,17 +6,11 @@ Clarifies pronouns and other references so claims make sense on their own.
 import logging
 from typing import Dict, List, Optional, Tuple
 
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.language_models.chat_models import BaseChatModel
 from pydantic import BaseModel, Field
 
-# Load environment first
-import load_env
-
 from Claim_Handle.Config.nodes import DISAMBIGUATION_CONFIG
-from Claim_Handle.prompts import (
-    DISAMBIGUATION_SYSTEM_PROMPT,
-    HUMAN_PROMPT,
-)
+from Claim_Handle.prompts import DISAMBIGUATION_SYSTEM_PROMPT, HUMAN_PROMPT
 from Claim_Handle.schemas import DisambiguatedContent, SelectedContent, State
 from utils import (
     call_llm_with_structured_output,
@@ -45,7 +39,7 @@ class DisambiguationOutput(BaseModel):
 
 
 async def _single_disambiguation_attempt(
-    selected_item: SelectedContent, llm
+    selected_item: SelectedContent, llm: BaseChatModel
 ) -> Tuple[bool, Optional[str]]:
     """Try to disambiguate a single sentence.
 

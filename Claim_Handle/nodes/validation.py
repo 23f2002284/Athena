@@ -5,14 +5,9 @@ Makes sure claims are complete declarative sentences ready for fact-checking.
 
 import asyncio
 import logging
-from typing import Dict, List, Sequence
+from typing import Dict, Sequence
 
-from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
-
-# Load environment first
-import load_env
-
 from Claim_Handle.prompts import VALIDATION_HUMAN_PROMPT, VALIDATION_SYSTEM_PROMPT
 from Claim_Handle.schemas import PotentialClaim, State, ValidatedClaim
 from utils import get_llm, call_llm_with_structured_output
