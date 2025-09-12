@@ -2,6 +2,17 @@
 
 import logging
 from typing import Any, Dict
+from dotenv import load_dotenv
+
+# Load environment variables from both files
+load_dotenv('config.env')
+load_dotenv('.env')
+
+# Import direct environment loader
+try:
+    import load_env  # This will auto-load config.env into os.environ
+except ImportError:
+    pass
 
 from Claim_Handle import graph as claim_extractor_graph
 
