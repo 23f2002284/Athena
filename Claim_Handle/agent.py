@@ -4,6 +4,16 @@ import sys
 
 from dotenv import load_dotenv
 
+# Load environment variables from both files
+load_dotenv('config.env')
+load_dotenv('.env')
+
+# Import direct environment loader
+try:
+    import load_env  # This will auto-load config.env into os.environ
+except ImportError:
+    pass
+
 # Add project root to path to allow imports from utils
 # sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from langgraph.graph import StateGraph
@@ -18,8 +28,6 @@ from Claim_Handle.nodes import (
 )
 
 from Claim_Handle.schemas import State
-
-load_dotenv()
 
 def create_graph() -> CompiledStateGraph:
     """Set up the claim extraction workflow graph.

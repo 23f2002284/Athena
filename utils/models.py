@@ -5,9 +5,28 @@ Provides access to configured language model instances for all modules.
 
 from langchain_core.language_models.chat_models import BaseChatModel
 
-from utils.settings import settings
 import os
+from dotenv import load_dotenv
 
+# Disable Google API discovery cache to avoid oauth2client warnings
+os.environ['GOOGLE_API_USE_CLIENT_CERTIFICATE'] = 'false'
+os.environ['GOOGLE_CLOUD_PROJECT'] = ''  # Prevent auto-discovery warnings
+
+# Suppress Google API discovery cache warnings
+import logging
+logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+
+# Load environment files BEFORE importing settings
+load_dotenv('config.env')
+load_dotenv('.env')
+
+# Import direct environment loader
+try:
+    import load_env  # This will auto-load config.env into os.environ
+except ImportError:
+    pass
+
+from utils.settings import settings
 
 def get_llm(
     model_name: str = "gemini-2.0-flash",
@@ -30,26 +49,39 @@ def get_llm(
 
     # Prefer Gemini if available
     try:
-        from langchain_google_genai import ChatGoogleGenerativeAI  # lazy import
-        if settings.gemini_api_key:
+        # Check both settings and environment directly
+        api_key = settings.gemini_api_key or os.getenv('GOOGLE_API_KEY')
+        
+        print(f"DEBUG: Checking GOOGLE_API_KEY - settings: {bool(settings.gemini_api_key)}, env: {bool(os.getenv('GOOGLE_API_KEY'))}")
+        
+        if api_key:
+            print(f"DEBUG: Creating Gemini LLM with API key (length: {len(api_key)})")            
+            from langchain_google_genai import ChatGoogleGenerativeAI
             return ChatGoogleGenerativeAI(
-                model="gemini-2.0-flash",
+                model="gemini-2.0-flash",  # Use stable model
                 temperature=temperature,
-                api_key=settings.gemini_api_key,
+                google_api_key=api_key, 
             )
-    except Exception:
+        else:
+            print("DEBUG: No GOOGLE_API_KEY found")
+    except Exception as e:
+        print(f"DEBUG: Gemini initialization failed: {e}")
         pass
 
+    # Try Vertex AI if GCP credentials are available
+    gcp_project = settings.gcp_project or os.getenv('GCP_PROJECT')
+    gcp_location = settings.gcp_location or os.getenv('GCP_LOCATION') or 'us-central1'
     credentials_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
-    has_vertex_env = bool(settings.gcp_project and settings.gcp_location and credentials_path and os.path.isfile(credentials_path))
+    
+    has_vertex_env = bool(gcp_project and credentials_path and os.path.isfile(credentials_path))
     if has_vertex_env:
         try:
             from langchain_google_vertexai import ChatVertexAI  # lazy import
             return ChatVertexAI(
                 model_name=model_name,
                 temperature=temperature,
-                project=settings.gcp_project,
-                location=settings.gcp_location,
+                project=gcp_project,
+                location=gcp_location,
             )
         except Exception:
             pass
