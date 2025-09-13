@@ -1,9 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import { ThemedText } from '../../components/ThemedText.js';
-import { ThemedView } from '../../components/ThemedView.js';
-import { api, EducationalContent } from '../../services/api.js';
+import { ThemedText } from '@components/ThemedText';
+import { ThemedView } from '@components/ThemedView';
+import api from '@services/api-client';
+import type { FactCheckResponse } from '@services/api-client';
+
+// Define the EducationalContent type based on your API response
+interface EducationalContent {
+  id: string;
+  title: string;
+  description: string;
+  content: string;
+  category?: string;
+  difficulty?: string;
+  // Add other properties as needed
+}
 
 export default function ContentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -15,10 +27,25 @@ export default function ContentDetailScreen() {
     let active = true;
     (async () => {
       try {
-        const data = await api.getContentById(String(id));
-        if (active) setItem(data);
+        // Using getResults as an example - replace with the actual method you need
+        const results = await api.getResults();
+        if (active) {
+          // Find the specific content by ID
+          const content = Object.entries(results).find(([itemId]) => itemId === id)?.[1];
+          if (content) {
+            setItem({
+              id,
+              title: content.title || `Content ${id}`,
+              description: content.description || 'No description available',
+              content: content.content || 'No content available',
+              // Map other fields as needed
+            });
+          } else {
+            setError('Content not found');
+          }
+        }
       } catch (e: any) {
-        if (active) setError(e?.message || 'Failed to load');
+        if (active) setError(e?.message || 'Failed to load content');
       } finally {
         if (active) setLoading(false);
       }
@@ -48,9 +75,12 @@ export default function ContentDetailScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       <ThemedView style={styles.header}>
         <ThemedText type="title">{item.title}</ThemedText>
-        <ThemedText>
-          {item.category} • {item.difficulty}
-        </ThemedText>
+        {(item.category || item.difficulty) && (
+          <ThemedText>
+            {item.category && <>{item.category}{item.difficulty ? ' • ' : ''}</>}
+            {item.difficulty}
+          </ThemedText>
+        )}
       </ThemedView>
       <ThemedText style={styles.content}>{item.content}</ThemedText>
     </ScrollView>

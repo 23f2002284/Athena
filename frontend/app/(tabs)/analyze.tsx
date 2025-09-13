@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, Button, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { ThemedText } from '../../components/ThemedText.js';
-import { ThemedView } from '../../components/ThemedView.js';
-import { api } from '../../services/api.js';
-import { ResultCard } from '../../components/ResultCard.js';
+import { ThemedText } from '@components/ThemedText';
+import { ThemedView } from '@components/ThemedView';
+import api, { type FactCheckResponse } from '@services/api-client';
+import { ResultCard } from '@components/ResultCard';
 
 export default function AnalyzeScreen() {
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<Awaited<ReturnType<typeof api.analyze>> | null>(null);
+  const [result, setResult] = useState<FactCheckResponse | null>(null);
 
   async function onAnalyze() {
     setError(null);
@@ -20,10 +20,15 @@ export default function AnalyzeScreen() {
     }
     setLoading(true);
     try {
-      const res = await api.analyze({ text });
-      setResult(res);
-    } catch (e: any) {
-      setError(e?.message || 'Something went wrong');
+      const response = await api.startFactCheck(text);
+      if (response) {
+        setResult(response);
+      } else {
+        setError('No response received from the server.');
+      }
+    } catch (e) {
+      const error = e as Error;
+      setError(error.message || 'An error occurred while analyzing the text.');
     } finally {
       setLoading(false);
     }

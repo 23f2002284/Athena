@@ -1,8 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, SafeAreaView, StyleSheet } from 'react-native';
-import { ThemedText } from '../../components/ThemedText.js';
-import { api, EducationalContent } from '../../services/api.js';
-import { ContentCard } from '../../components/ContentCard.js';
+import { ThemedText } from '@components/ThemedText';
+import api from '@services/api-client';
+import type { FactCheckResponse } from '@services/api-client';
+
+// Define the EducationalContent type based on your API response
+interface EducationalContent {
+  id: string;
+  title: string;
+  description: string;
+  // Add other properties as needed
+}
+import { ContentCard } from '@components/ContentCard';
 import { Link } from 'expo-router';
 
 export default function LearnScreen() {
@@ -14,8 +23,18 @@ export default function LearnScreen() {
     let active = true;
     (async () => {
       try {
-        const data = await api.listContent();
-        if (active) setItems(data);
+        // Using getResults as an example - replace with the actual method you need
+        const results = await api.getResults();
+        if (active) {
+          // Transform the results to match EducationalContent interface
+          const content: EducationalContent[] = Object.entries(results).map(([id, result]) => ({
+            id,
+            title: result.title || `Content ${id}`,
+            description: result.description || 'No description available',
+            // Map other fields as needed
+          }));
+          setItems(content);
+        }
       } catch (e: any) {
         if (active) setError(e?.message || 'Failed to load content');
       } finally {
