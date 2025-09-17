@@ -11,6 +11,8 @@ module.exports = function (api) {
           alias: {
             '@components': './components',
             '@components/*': './components/*',
+            '@app-components': './src/components',
+            '@app-components/*': './src/components/*',
             '@constants': './constants',
             '@hooks': './hooks',
             '@services': './src/services',

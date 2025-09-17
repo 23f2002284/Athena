@@ -12,7 +12,7 @@ def load_environment():
     config_file = Path(__file__).parent / "config.env"
     
     if not config_file.exists():
-        print(f"❌ Config file not found: {config_file}")
+        print(f"Config file not found: {config_file}")
         return False
     
     try:
@@ -43,21 +43,21 @@ def load_environment():
                 os.environ[key] = value
                 loaded_vars.append(key)
         
-        print(f"✅ Loaded {len(loaded_vars)} environment variables from config.env")
-        
+        print(f"Loaded {len(loaded_vars)} environment variables from config.env")
+
         # Verify key variables
         if os.getenv('GOOGLE_API_KEY'):
-            print("✅ GOOGLE_API_KEY loaded successfully")
+            print("GOOGLE_API_KEY loaded successfully")
         elif os.getenv('GCP_PROJECT'):
-            print("✅ GCP_PROJECT loaded successfully")
+            print("GCP_PROJECT loaded successfully")
         else:
-            print("⚠️  No LLM configuration found")
+            print("Warning: No LLM configuration found")
             return False
             
         return True
         
     except Exception as e:
-        print(f"❌ Failed to load config.env: {e}")
+        print(f"Failed to load config.env: {e}")
         return False
 
 # Auto-load when imported
@@ -67,6 +67,6 @@ if __name__ != "__main__":
 if __name__ == "__main__":
     success = load_environment()
     if success:
-        print("\n🎉 Environment loaded successfully!")
+        print("\nEnvironment loaded successfully!")
     else:
-        print("\n❌ Environment loading failed!")
+        print("\nEnvironment loading failed!")

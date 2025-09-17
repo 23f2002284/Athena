@@ -4,7 +4,15 @@ import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@components/ThemedText';
 import { ThemedView } from '@components/ThemedView';
 import api from '@services/api-client';
-import type { FactCheckResponse } from '@services/api-client';
+
+interface ApiContent {
+  title?: string;
+  description?: string;
+  content?: string;
+  category?: string;
+  difficulty?: string;
+  [key: string]: any; // For any additional properties
+}
 
 // Define the EducationalContent type based on your API response
 interface EducationalContent {
@@ -31,14 +39,17 @@ export default function ContentDetailScreen() {
         const results = await api.getResults();
         if (active) {
           // Find the specific content by ID
-          const content = Object.entries(results).find(([itemId]) => itemId === id)?.[1];
+          const content = Object.entries<ApiContent>(results as Record<string, ApiContent>)
+            .find(([itemId]) => itemId === id)?.[1];
+          
           if (content) {
             setItem({
               id,
-              title: content.title || `Content ${id}`,
-              description: content.description || 'No description available',
-              content: content.content || 'No content available',
-              // Map other fields as needed
+              title: content?.title || `Content ${id}`,
+              description: content?.description || 'No description available',
+              content: content?.content || 'No content available',
+              category: content?.category,
+              difficulty: content?.difficulty,
             });
           } else {
             setError('Content not found');
