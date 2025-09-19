@@ -6,9 +6,13 @@ Breaks complex sentences into simple, standalone factual claims.
 import asyncio
 import itertools
 import logging
-from typing import Dict, List
+from typing import Dict, List, Optional
 
+from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
+
+# Load environment first
+import load_env
 
 from Claim_Handle.Config.nodes import DECOMPOSITION_CONFIG
 from Claim_Handle.prompts import DECOMPOSITION_SYSTEM_PROMPT, HUMAN_PROMPT
@@ -133,8 +137,17 @@ async def decomposition_node(state: State) -> Dict[str, List[PotentialClaim]]:
 
     # Check if any claims were found
     if not potential_claims:
-        logger.info("No potential claims found after processing")
-        return {"potential_claims": []}
+        # Fallback: treat disambiguated sentences themselves as potential claims
+        logger.info("No potential claims found; falling back to using sentences as claims")
+        potential_claims = [
+            PotentialClaim(
+                claim_text=item.disambiguated_sentence,
+                disambiguated_sentence=item.disambiguated_sentence,
+                original_sentence=item.original_selected_item.original_context_item.original_sentence,
+                original_index=item.original_selected_item.original_context_item.original_index,
+            )
+            for item in disambiguated_contents
+        ]
 
     logger.info(f"Extracted a total of {len(potential_claims)} potential claims")
     return {"potential_claims": potential_claims}

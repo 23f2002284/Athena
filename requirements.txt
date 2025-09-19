@@ -20,7 +20,7 @@ debugpy==1.8.16
 decorator==5.2.1
 distro==1.9.0
 docstring_parser==0.17.0
-exa-py==1.15.2
+#exa-py==1.15.2
 executing==2.2.0
 filetype==1.2.0
 forbiddenfruit==0.1.4
@@ -35,13 +35,11 @@ google-cloud-core==2.4.3
 google-cloud-resource-manager==1.14.2
 google-cloud-storage==2.19.0
 google-crc32c==1.7.1
-google-genai==1.31.0
 google-resumable-media==2.7.2
 googleapis-common-protos==1.70.0
 greenlet==3.2.4
 grpc-google-iam-v1==0.14.2
 grpcio==1.74.0
-grpcio-status==1.74.0
 h11==0.16.0
 httpcore==1.0.9
 httplib2==0.22.0
@@ -59,12 +57,8 @@ jsonpointer==3.0.0
 jsonschema_rs==0.29.1
 jupyter_client==8.6.3
 jupyter_core==5.8.1
-langchain==0.3.27
-langchain-core==0.3.75
-langchain-exa==0.3.0
-langchain-google-genai==2.1.10
-langchain-google-vertexai==2.0.28
-langchain-tavily==0.2.11
+#langchain-exa==0.3.0
+#langchain-tavily==0.2.11
 langchain-text-splitters==0.3.9
 langgraph==0.6.6
 langgraph-api==0.3.1
@@ -79,7 +73,6 @@ multidict==6.6.4
 nest-asyncio==1.6.0
 nltk==3.9.1
 numexpr==2.11.0
-numpy==2.3.2
 oauth2client==4.1.3
 openai==1.101.0
 orjson==3.11.2
@@ -90,16 +83,13 @@ platformdirs==4.3.8
 prompt_toolkit==3.0.51
 propcache==0.3.2
 proto-plus==1.26.1
-protobuf==6.32.0
 psutil==7.0.0
 pure_eval==0.2.3
 pyarrow==19.0.1
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
 pycparser==2.22
-pydantic==2.11.7
 pydantic-settings==2.10.1
-pydantic_core==2.33.2
 Pygments==2.19.2
 PyJWT==2.10.1
 pyparsing==3.2.3
@@ -118,8 +108,6 @@ sniffio==1.3.1
 SQLAlchemy==2.0.43
 sse-starlette==2.1.3
 stack-data==0.6.3
-starlette==0.47.2
-structlog==25.4.0
 tenacity==9.1.2
 tornado==6.5.2
 tqdm==4.67.1
@@ -136,3 +124,31 @@ websockets==15.0.1
 xxhash==3.5.0
 yarl==1.20.1
 zstandard==0.24.0
+langchain-core>=0.3.10,<0.4
+# Core compatibility constraints
+numpy>=1.22.4,<2.1.0
+protobuf
+starlette>=0.40.0,<0.42.0
+structlog>=24.4.0,<25.0.0
+
+# Missing dependencies
+albumentations>=0.5.2
+pillow>=10.0.1
+
+# Your existing packages (compatible versions)
+google-genai>=1.31.0
+langchain>=0.3.27
+langchain-google-vertexai>=2.0.28
+langchain-google-genai>=2.1.10
+fastapi<0.115.6
+pydantic
+pydantic-core
+grpcio-status
+google-api-python-client==2.181.0 
+langchain-google-community==2.0.7
+fastapi>=0.104.1
+uvicorn>=0.24.0
+websockets>=12.0
+pydantic>=2.5.0
+watchfiles>=0.21.0
+python-multipart>=0.0.6

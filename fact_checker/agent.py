@@ -4,16 +4,23 @@ from dotenv import load_dotenv
 from langgraph.graph import END, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from fact_checker.nodes import (
+# Load environment variables from both files
+load_dotenv('config.env')
+load_dotenv('.env')
+
+# Import direct environment loader
+try:
+    import load_env  # This will auto-load config.env into os.environ
+except ImportError:
+    pass
+
+from .nodes import (
     claim_verifier_node,
     dispatch_claims_for_verification,
     extract_claims,
     generate_report_node,
 )
-from fact_checker.schemas import State
-    
-
-load_dotenv()
+from .schemas import State
 
 # Configure root logger
 logger = logging.getLogger()

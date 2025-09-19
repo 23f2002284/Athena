@@ -9,7 +9,6 @@ from typing import Any, Awaitable, Callable, List, Optional, Tuple, Type, TypeVa
 
 from pydantic import BaseModel
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_google_vertexai import ChatVertexAI
 
 T = TypeVar("T")
 R = TypeVar("R")
@@ -62,7 +61,7 @@ def truncate_evidence_for_token_limit(
     return result
 
 async def call_llm_with_structured_output(
-    llm: ChatVertexAI,
+    llm: BaseChatModel,
     output_class: Type[M],
     messages: List[Tuple[str, str]],
     context_desc: str = "",

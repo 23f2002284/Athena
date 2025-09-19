@@ -6,11 +6,17 @@ Clarifies pronouns and other references so claims make sense on their own.
 import logging
 from typing import Dict, List, Optional, Tuple
 
-from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
 
+# Load environment first
+import load_env
+
 from Claim_Handle.Config.nodes import DISAMBIGUATION_CONFIG
-from Claim_Handle.prompts import DISAMBIGUATION_SYSTEM_PROMPT, HUMAN_PROMPT
+from Claim_Handle.prompts import (
+    DISAMBIGUATION_SYSTEM_PROMPT,
+    HUMAN_PROMPT,
+)
 from Claim_Handle.schemas import DisambiguatedContent, SelectedContent, State
 from utils import (
     call_llm_with_structured_output,
@@ -39,7 +45,7 @@ class DisambiguationOutput(BaseModel):
 
 
 async def _single_disambiguation_attempt(
-    selected_item: SelectedContent, llm: BaseChatModel
+    selected_item: SelectedContent, llm
 ) -> Tuple[bool, Optional[str]]:
     """Try to disambiguate a single sentence.
 
@@ -140,8 +146,16 @@ async def disambiguation_node(state: State) -> Dict[str, List[DisambiguatedConte
     )
 
     if not disambiguated_contents:
-        logger.info("Nothing could be disambiguated")
-        return {}
+        # Fallback: pass through selected contents as already clear enough
+        logger.info("Nothing could be disambiguated; passing through selected contents as-is")
+        return {
+            "disambiguated_contents": [
+                _create_disambiguated_content(
+                    selected_item.processed_sentence, selected_item
+                )
+                for selected_item in selected_contents
+            ]
+        }
 
     logger.info(
         f"Successfully disambiguated {len(disambiguated_contents)} of {len(selected_contents)} items"

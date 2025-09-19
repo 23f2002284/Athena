@@ -1,6 +1,17 @@
 import React from 'react';
 import { View, Text, StyleSheet, Linking } from 'react-native';
-import type { AnalysisResponse } from '@/services/api';
+
+interface Source {
+  title: string;
+  url: string;
+}
+
+interface AnalysisResponse {
+  is_misinformation: boolean;
+  confidence: number;
+  explanation: string;
+  sources?: Source[];
+}
 
 type Props = {
   result: AnalysisResponse;
@@ -16,7 +27,7 @@ export function ResultCard({ result }: Props) {
       <Text style={styles.explanation}>{result.explanation}</Text>
       {result.sources?.length ? (
         <View style={styles.sources}>
-          {result.sources.map((s, idx) => (
+          {result.sources.map((s: Source, idx: number) => (
             <Text
               key={`${s.url}-${idx}`}
               style={styles.link}

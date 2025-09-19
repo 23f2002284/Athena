@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import type { EducationalContent } from '@/services/api';
+import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
+import type { EducationalContent } from '../services/apiClient';
 
 type Props = {
   item: EducationalContent;
@@ -16,7 +16,7 @@ export function ContentCard({ item, onPress }: Props) {
       </View>
       <Text style={styles.meta}>{item.category}</Text>
       <View style={styles.tags}>
-        {item.tags?.slice(0, 3).map((t) => (
+        {item.tags?.slice(0, 3).map((t: string) => (
           <Text style={styles.tag} key={t}>#{t}</Text>
         ))}
       </View>
@@ -30,11 +30,20 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginVertical: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06)',
+      },
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   header: {
     flexDirection: 'row',
