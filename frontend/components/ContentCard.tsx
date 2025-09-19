@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
-import type { EducationalContent } from '@/services/api';
+import type { EducationalContent } from '../services/apiClient';
 
 type Props = {
   item: EducationalContent;
@@ -16,7 +16,7 @@ export function ContentCard({ item, onPress }: Props) {
       </View>
       <Text style={styles.meta}>{item.category}</Text>
       <View style={styles.tags}>
-        {item.tags?.slice(0, 3).map((t) => (
+        {item.tags?.slice(0, 3).map((t: string) => (
           <Text style={styles.tag} key={t}>#{t}</Text>
         ))}
       </View>

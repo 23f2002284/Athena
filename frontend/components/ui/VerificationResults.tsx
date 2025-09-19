@@ -1,11 +1,13 @@
 import React from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  Linking
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Linking,
+  Modal,
+  Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 // Using dynamic import to handle ESM/CJS interop
@@ -48,10 +50,12 @@ interface VerificationResult {
 interface VerificationResultsProps {
   result: VerificationResult;
   onClose?: () => void;
+  visible?: boolean;
 }
 
-export function VerificationResults({ result, onClose }: VerificationResultsProps) {
+export function VerificationResults({ result, onClose, visible = true }: VerificationResultsProps) {
   const { colors } = useTheme();
+  const screenHeight = Dimensions.get('window').height;
 
   const handleSourcePress = async (url: string) => {
     try {
@@ -77,15 +81,25 @@ export function VerificationResults({ result, onClose }: VerificationResultsProp
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.background }]}>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Verification Results</Text>
-        <View style={{ width: 24 }} />
-      </View>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
+      <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+        <ScrollView
+          style={[styles.container, { backgroundColor: colors.background }]}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* Header */}
+          <View style={[styles.header, { backgroundColor: colors.background }]}>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Ionicons name="close" size={24} color={colors.text} />
+            </TouchableOpacity>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>Verification Results</Text>
+            <View style={{ width: 24 }} />
+          </View>
 
       {/* Verification Status */}
       <View style={[styles.section, { backgroundColor: colors.background }]}>
@@ -94,43 +108,43 @@ export function VerificationResults({ result, onClose }: VerificationResultsProp
         <View style={styles.statusContainer}>
           <View style={styles.statusItem}>
             <View style={[styles.statusBadge, { backgroundColor: '#E8F5E8' }]}>
-              <Text style={[styles.statusText, { color: '#00C851' }]}>Contextual</Text>
-              <Text style={styles.statusNumber}>0</Text>
+              <Text style={[styles.statusText, { color: '#00C851' }]}>Supported</Text>
+              <Text style={styles.statusNumber}>{result.summary.supported}</Text>
             </View>
           </View>
-          
+
           <View style={styles.statusItem}>
-            <View style={[styles.statusBadge, { backgroundColor: '#FFF3E0' }]}>
-              <Text style={[styles.statusText, { color: '#FF9800' }]}>Selected</Text>
-              <Text style={styles.statusNumber}>0</Text>
+            <View style={[styles.statusBadge, { backgroundColor: '#FFEBEE' }]}>
+              <Text style={[styles.statusText, { color: '#FF4444' }]}>Refuted</Text>
+              <Text style={styles.statusNumber}>{result.summary.refuted}</Text>
             </View>
           </View>
-          
+
           <View style={styles.statusItem}>
             <View style={[styles.statusBadge, { backgroundColor: '#F3E5F5' }]}>
-              <Text style={[styles.statusText, { color: '#9C27B0' }]}>Disambiguated</Text>
-              <Text style={styles.statusNumber}>0</Text>
+              <Text style={[styles.statusText, { color: '#9C27B0' }]}>Insufficient</Text>
+              <Text style={styles.statusNumber}>{result.summary.insufficient}</Text>
             </View>
           </View>
-          
+
           <View style={styles.statusItem}>
             <View style={[styles.statusBadge, { backgroundColor: '#E3F2FD' }]}>
-              <Text style={[styles.statusText, { color: '#2196F3' }]}>Claims</Text>
-              <Text style={styles.statusNumber}>0</Text>
+              <Text style={[styles.statusText, { color: '#2196F3' }]}>Conflicting</Text>
+              <Text style={styles.statusNumber}>{result.summary.conflicting}</Text>
             </View>
           </View>
-          
+
           <View style={styles.statusItem}>
             <View style={[styles.statusBadge, { backgroundColor: '#E8F5E8' }]}>
-              <Text style={[styles.statusText, { color: '#4CAF50' }]}>Validated</Text>
-              <Text style={styles.statusNumber}>1</Text>
+              <Text style={[styles.statusText, { color: '#4CAF50' }]}>Claims</Text>
+              <Text style={styles.statusNumber}>{result.claimsAnalyzed}</Text>
             </View>
           </View>
-          
+
           <View style={styles.statusItem}>
             <View style={[styles.statusBadge, { backgroundColor: '#FFF3E0' }]}>
-              <Text style={[styles.statusText, { color: '#FF6B35' }]}>Verdict</Text>
-              <Text style={styles.statusNumber}>1</Text>
+              <Text style={[styles.statusText, { color: '#FF6B35' }]}>Sources</Text>
+              <Text style={styles.statusNumber}>{result.sources.length}</Text>
             </View>
           </View>
         </View>
@@ -141,7 +155,7 @@ export function VerificationResults({ result, onClose }: VerificationResultsProp
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Sources</Text>
         
         <View style={styles.sourcesList}>
-          {result.sources.map((source, index) => (
+          {result.sources.slice(0, 5).map((source, index) => (
             <TouchableOpacity
               key={source.id}
               style={[styles.sourceItem, { borderColor: colors.border }]}
@@ -149,10 +163,14 @@ export function VerificationResults({ result, onClose }: VerificationResultsProp
               activeOpacity={0.7}
             >
               <View style={styles.sourceIcon}>
-                <Ionicons name="globe" size={16} color={source.isReliable ? '#4CAF50' : '#FF9800'} />
+                <Ionicons
+                  name={source.isReliable ? "checkmark-circle" : "warning"}
+                  size={16}
+                  color={source.isReliable ? '#4CAF50' : '#FF9800'}
+                />
               </View>
               <View style={styles.sourceContent}>
-                <Text style={[styles.sourceTitle, { color: colors.text }]} numberOfLines={1}>
+                <Text style={[styles.sourceTitle, { color: colors.text }]} numberOfLines={2}>
                   {source.title}
                 </Text>
                 <Text style={[styles.sourceDomain, { color: colors.text + '80' }]} numberOfLines={1}>
@@ -160,10 +178,25 @@ export function VerificationResults({ result, onClose }: VerificationResultsProp
                 </Text>
               </View>
               <View style={styles.sourceMore}>
-                <Text style={[styles.moreText, { color: colors.text + '60' }]}>+25 more</Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.text + '60'} />
               </View>
             </TouchableOpacity>
           ))}
+          {result.sources.length > 5 && (
+            <View style={[styles.sourceItem, { borderColor: colors.border, opacity: 0.7 }]}>
+              <View style={styles.sourceIcon}>
+                <Ionicons name="ellipsis-horizontal" size={16} color={colors.text + '60'} />
+              </View>
+              <View style={styles.sourceContent}>
+                <Text style={[styles.sourceTitle, { color: colors.text + '80' }]}>
+                  +{result.sources.length - 5} more sources
+                </Text>
+                <Text style={[styles.sourceDomain, { color: colors.text + '60' }]}>
+                  Additional verification sources
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
       </View>
 
@@ -180,24 +213,48 @@ export function VerificationResults({ result, onClose }: VerificationResultsProp
         <View style={styles.progressContainer}>
           <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
             <View style={styles.progressSegments}>
-              <View style={[styles.progressSegment, { backgroundColor: '#00C851', width: '64%' }]} />
-              <View style={[styles.progressSegment, { backgroundColor: '#FF4444', width: '9%' }]} />
-              <View style={[styles.progressSegment, { backgroundColor: '#9C27B0', width: '27%' }]} />
-              <View style={[styles.progressSegment, { backgroundColor: '#2196F3', width: '0%' }]} />
+              <View style={[
+                styles.progressSegment,
+                {
+                  backgroundColor: '#00C851',
+                  width: `${Math.round((result.summary.supported / result.claimsAnalyzed) * 100)}%`
+                }
+              ]} />
+              <View style={[
+                styles.progressSegment,
+                {
+                  backgroundColor: '#FF4444',
+                  width: `${Math.round((result.summary.refuted / result.claimsAnalyzed) * 100)}%`
+                }
+              ]} />
+              <View style={[
+                styles.progressSegment,
+                {
+                  backgroundColor: '#9C27B0',
+                  width: `${Math.round((result.summary.insufficient / result.claimsAnalyzed) * 100)}%`
+                }
+              ]} />
+              <View style={[
+                styles.progressSegment,
+                {
+                  backgroundColor: '#2196F3',
+                  width: `${Math.round((result.summary.conflicting / result.claimsAnalyzed) * 100)}%`
+                }
+              ]} />
             </View>
           </View>
           <View style={styles.progressLabels}>
             <Text style={[styles.progressLabel, { color: '#00C851' }]}>
-              ● Supported 64%
+              ● Supported {Math.round((result.summary.supported / result.claimsAnalyzed) * 100)}%
             </Text>
             <Text style={[styles.progressLabel, { color: '#FF4444' }]}>
-              ● Refuted 9%
+              ● Refuted {Math.round((result.summary.refuted / result.claimsAnalyzed) * 100)}%
             </Text>
             <Text style={[styles.progressLabel, { color: '#9C27B0' }]}>
-              ● Insufficient Evidence 27%
+              ● Insufficient {Math.round((result.summary.insufficient / result.claimsAnalyzed) * 100)}%
             </Text>
             <Text style={[styles.progressLabel, { color: '#2196F3' }]}>
-              ● Conflicting 0%
+              ● Conflicting {Math.round((result.summary.conflicting / result.claimsAnalyzed) * 100)}%
             </Text>
           </View>
         </View>
@@ -216,7 +273,7 @@ export function VerificationResults({ result, onClose }: VerificationResultsProp
       {/* Fast Check Summary */}
       <View style={[styles.section, { backgroundColor: colors.background, marginBottom: 100 }]}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Fast Check Summary</Text>
-        
+
         <View style={styles.summaryContainer}>
           <View style={styles.summaryRow}>
             <View style={styles.summaryLeft}>
@@ -228,39 +285,44 @@ export function VerificationResults({ result, onClose }: VerificationResultsProp
                 <Text style={[styles.moreIndicator, { color: colors.text + '60' }]}>⋯</Text>
               </View>
               <Text style={[styles.summaryText, { color: colors.text }]}>
-                Newton&apos;s laws of motion
+                {result.claim}
               </Text>
               <Text style={[styles.summarySubtext, { color: colors.text + '80' }]}>
-                Any state that Isaac Newton formulated three laws of motion, 
-                as stated in the Principia (Sources 1), Newton (Source 2), and Science Facts (Source
+                Verified using {result.sources.length} source{result.sources.length !== 1 ? 's' : ''} including {result.sources.slice(0, 2).map(s => s.domain).join(', ')}{result.sources.length > 2 ? ', and others' : ''}
               </Text>
             </View>
-            
+
             <View style={styles.summaryRight}>
-              <VerdictIcon status="refuted" />
-              <Text style={[styles.verdictLabel, { color: '#FF4444' }]}>Refuted</Text>
-              
+              <VerdictIcon status={result.verdict.status} />
+              <Text style={[styles.verdictLabel, { color: result.verdict.color }]}>
+                {result.verdict.status.charAt(0).toUpperCase() + result.verdict.status.slice(1)}
+              </Text>
+
               <Text style={[styles.summaryNote, { color: colors.text + '60' }]}>
-                The Wright brothers completed the first powered f
+                Confidence: {result.verdict.percentage}%
               </Text>
               <Text style={[styles.summaryNote, { color: colors.text + '60' }]}>
-                Multiple sources clearly state that the Wright brothers comp
-                flight in 1903, not 1912.
+                Based on {result.claimsAnalyzed} claim{result.claimsAnalyzed !== 1 ? 's' : ''} analyzed
               </Text>
             </View>
           </View>
         </View>
+        </View>
+        </ScrollView>
       </View>
-    </ScrollView>
+    </Modal>
   );
 }
 
-// Export the VerificationResults component
-export default VerificationResults;
-
 const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+  },
   container: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100,
   },
   header: {
     flexDirection: 'row',
@@ -437,3 +499,5 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
 });
+
+export default VerificationResults;

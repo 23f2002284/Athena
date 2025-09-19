@@ -5,7 +5,6 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 import type { StyleProp } from 'react-native';
 import { Colors } from '../../src/constants/Colors';
-import Layout from '../../src/components/layout/Layout';
 
 // Props for the tab bar icon component from expo-router
 interface TabBarIconProps {
@@ -31,8 +30,7 @@ export default function TabLayout() {
   const colors = Colors[colorScheme ?? 'light'];
 
   return (
-    <Layout showFooter={false}>
-      <Tabs
+    <Tabs
         screenOptions={{
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.tabIconDefault,
@@ -108,6 +106,5 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-    </Layout>
   );
 }

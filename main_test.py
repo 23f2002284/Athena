@@ -115,7 +115,7 @@ class ConnectionManager:
         await websocket.send_text(json.dumps(message))
 
     async def broadcast(self, message: Union[dict, BaseModel]):
-        message_dict = message.dict() if isinstance(message, BaseModel) else message
+        message_dict = message.model_dump() if isinstance(message, BaseModel) else message
         for connection in self.active_connections:
             try:
                 await connection.send_text(json.dumps(message_dict))
@@ -556,15 +556,20 @@ async def main():
         
         # Check if it's a quota/API limit error
         error_str = str(e).lower()
-        if any(term in error_str for term in ['quota', 'exceeded', '429', 'rate limit', 'billing']):
+        if any(term in error_str for term in ['quota', 'exceeded', '429', 'rate limit', 'billing', 'resourceexhausted']):
             # API quota exceeded - provide informed fallback
             fallback_response = generate_fallback_response(args.text)
             logger.info(f"FINAL RESULT: {fallback_response}")
             print(f"FINAL RESULT: {fallback_response}")
         else:
-            # Other errors - generic fallback
-            logger.info("FINAL RESULT: Unknown\nConfidence: 50%\nBased on our analysis, unable to determine the veracity of this claim due to technical issues.")
-            print("FINAL RESULT: Unknown\nConfidence: 50%\nBased on our analysis, unable to determine the veracity of this claim due to technical issues.")
+            # Other errors - check for specific error types
+            if 'discriminator' in error_str or 'pydantic' in error_str:
+                logger.info("FINAL RESULT: Unknown\nConfidence: 50%\nBased on our analysis, unable to determine the veracity of this claim due to dependency issues. Please check if all dependencies are properly updated.")
+                print("FINAL RESULT: Unknown\nConfidence: 50%\nBased on our analysis, unable to determine the veracity of this claim due to dependency issues.")
+            else:
+                # Generic technical error fallback
+                logger.info("FINAL RESULT: Unknown\nConfidence: 50%\nBased on our analysis, unable to determine the veracity of this claim due to technical issues.")
+                print("FINAL RESULT: Unknown\nConfidence: 50%\nBased on our analysis, unable to determine the veracity of this claim due to technical issues.")
         
         sys.exit(1)
 
@@ -573,32 +578,43 @@ def generate_fallback_response(text: str) -> str:
     """Generate a fallback response when API quotas are exceeded"""
     # Simple heuristics for common misinformation patterns
     text_lower = text.lower()
-    
+
     # Keywords that often indicate misinformation
     suspicious_keywords = [
         'breaking news', 'urgent', 'government secretly', 'doctors hate', 'they don\'t want you to know',
         'banned', 'censored', 'exclusive', 'shocking truth', 'miracle cure', 'instant',
-        'banks hate', 'one weird trick', 'secret', 'exposed', 'leaked'
+        'banks hate', 'one weird trick', 'secret', 'exposed', 'leaked', 'conspiracy',
+        'cover up', 'mainstream media won\'t tell you', 'big pharma', 'click here', 'share before removed'
     ]
-    
+
     # Keywords that often indicate legitimate information
     legitimate_keywords = [
         'according to', 'research shows', 'study published', 'experts say', 'data indicates',
-        'peer reviewed', 'clinical trial', 'university', 'journal', 'official statement'
+        'peer reviewed', 'clinical trial', 'university', 'journal', 'official statement',
+        'statistics show', 'evidence suggests', 'scientific study', 'researchers found'
     ]
-    
+
+    # Simple factual claims (often true)
+    factual_patterns = [
+        'the sky is', 'water is', 'earth is', 'sun is', 'moon is',
+        'humans are', 'plants are', 'animals are', 'gravity is'
+    ]
+
     suspicious_count = sum(1 for keyword in suspicious_keywords if keyword in text_lower)
     legitimate_count = sum(1 for keyword in legitimate_keywords if keyword in text_lower)
-    
-    # Simple scoring
-    if suspicious_count > legitimate_count and suspicious_count >= 2:
-        confidence = min(75, 50 + suspicious_count * 10)
+    factual_count = sum(1 for pattern in factual_patterns if pattern in text_lower)
+
+    # Simple scoring with factual patterns considered
+    if factual_count > 0 and len(text.split()) < 20:  # Short factual statements
+        return f"Likely True\nConfidence: 70%\nBased on simple factual claim pattern (API quota exceeded - heuristic analysis)."
+    elif suspicious_count > legitimate_count and suspicious_count >= 2:
+        confidence = min(75, 50 + suspicious_count * 8)
         return f"Likely False\nConfidence: {confidence}%\nBased on language patterns commonly associated with misinformation (API quota exceeded - heuristic analysis)."
     elif legitimate_count > suspicious_count and legitimate_count >= 2:
-        confidence = min(70, 50 + legitimate_count * 8)
+        confidence = min(70, 50 + legitimate_count * 6)
         return f"Likely True\nConfidence: {confidence}%\nBased on language patterns commonly associated with credible information (API quota exceeded - heuristic analysis)."
     else:
-        return "Unknown\nConfidence: 50%\nBased on limited analysis due to API quota restrictions, unable to determine veracity."
+        return "Unknown\nConfidence: 50%\nUnable to verify due to API quota restrictions. Please try again later when quota resets."
 
 
 # Main function for direct script execution
@@ -623,25 +639,4 @@ if __name__ == "__main__":
     )
     
     # Run the pipeline
-    asyncio.run(main())
-if __name__ == "__main__":
-    # Configure logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler(),
-            logging.FileHandler('pipeline.log')
-        ]
-    )
-    
-    # Example usage
-    async def main():
-        # Example: Run fact-checking pipeline
-        result = await run_pipeline(
-            pipeline="fact",
-            text="Your text to analyze here"
-        )
-        print("Pipeline result:", result)
-    
     asyncio.run(main())

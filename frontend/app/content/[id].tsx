@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import { ThemedText } from '@components/ThemedText';
-import { ThemedView } from '@components/ThemedView';
+import ThemedText from '../../components/ThemedText';
+import ThemedView from '../../components/ThemedView';
 import api from '@services/api-client';
 
 interface ApiContent {

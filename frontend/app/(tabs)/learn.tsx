@@ -13,12 +13,16 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ThemedText } from '@components/ThemedText';
+import ThemedText from '../../components/ThemedText';
+import ThemedView from '../../components/ThemedView';
 
 // Import new components
 import SearchBar from '../../components/ui/SearchBar';
 import FlashCard from '../../components/ui/FlashCard';
 import DropdownSection from '../../components/ui/DropdownSection';
+
+// Import API client
+import api from '../../services/apiClient';
 
 // Define interfaces
 interface EducationalContent {
@@ -163,30 +167,19 @@ export default function LearnScreen() {
   const handleSearch = async (query: string) => {
     setLoading(true);
     try {
-      // Simulate API call - replace with real search functionality
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Make real API call to search educational content
+      const results = await api.searchEducationalContent(query);
 
-      // Mock search results based on query
-      const mockResults: EducationalContent[] = [
-        {
-          id: 'search-1',
-          title: `Understanding ${query}`,
-          description: `Comprehensive guide about ${query} and its implications in media literacy.`,
-          content: `This is detailed information about ${query}...`,
-          category: 'Search Result'
-        },
-        {
-          id: 'search-2',
-          title: `How to Identify ${query}`,
-          description: `Practical tips for recognizing and dealing with ${query} in digital media.`,
-          content: `Learn practical strategies for ${query}...`,
-          category: 'Search Result'
-        }
-      ];
-
-      setSearchResults(mockResults);
-      setCurrentMode('search');
+      if (results && results.length > 0) {
+        setSearchResults(results);
+        setCurrentMode('search');
+      } else {
+        // If no results, show empty state
+        setSearchResults([]);
+        setCurrentMode('search');
+      }
     } catch (error) {
+      console.error('Search error:', error);
       Alert.alert('Search Error', 'Unable to search at this time. Please try again later.');
     } finally {
       setLoading(false);
@@ -449,7 +442,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 100,
+    paddingBottom: 85,
   },
   overviewGrid: {
     flexDirection: 'row',

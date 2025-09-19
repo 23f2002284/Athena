@@ -9,7 +9,6 @@ import { ThemeProvider, DarkTheme, DefaultTheme } from '@react-navigation/native
 import { PaperProvider, MD3DarkTheme, MD3LightTheme, adaptNavigationTheme } from 'react-native-paper';
 import { DarkTheme as NavigationDarkTheme, DefaultTheme as NavigationDefaultTheme } from '@react-navigation/native';
 import merge from 'deepmerge';
-import Layout from '../src/components/layout/Layout';
 
 // Combine react-native-paper and react-navigation themes
 const { LightTheme, DarkTheme: NavDarkTheme } = adaptNavigationTheme({
@@ -77,18 +76,14 @@ export default function RootLayout() {
     <PaperProvider theme={colorScheme === 'dark' ? MD3DarkTheme : MD3LightTheme}>
       <ThemeProvider value={currentTheme}>
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-        <View style={{ flex: 1, backgroundColor: currentTheme.colors.background }}>
-          <Layout showFooter={false}>
-            <Stack screenOptions={{
-              headerShown: false,
-              animation: 'fade',
-              contentStyle: { backgroundColor: currentTheme.colors.background },
-            }}>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="+not-found" />
-            </Stack>
-          </Layout>
-        </View>
+        <Stack screenOptions={{
+          headerShown: false,
+          animation: 'fade',
+          contentStyle: { backgroundColor: currentTheme.colors.background },
+        }}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+        </Stack>
       </ThemeProvider>
     </PaperProvider>
   );

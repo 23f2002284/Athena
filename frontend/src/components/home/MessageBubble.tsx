@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Linking } from 'react-native';
+import { View, Text, StyleSheet, Linking, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
 
@@ -14,12 +14,14 @@ interface MessageBubbleProps {
   text: string;
   isUser: boolean;
   verificationResult?: VerificationResult;
+  onVerificationPress?: () => void;
 }
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({
   text,
   isUser,
   verificationResult,
+  onVerificationPress,
 }) => {
   const { colors } = useTheme();
 
@@ -40,10 +42,15 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   }
 
   if (verificationResult) {
+    const BubbleComponent = onVerificationPress ? TouchableOpacity : View;
     return (
-      <View style={[styles.messageBubble, styles.botBubble, { backgroundColor: colors.card }]}>
+      <BubbleComponent
+        style={[styles.messageBubble, styles.botBubble, { backgroundColor: colors.card }]}
+        onPress={onVerificationPress}
+        activeOpacity={onVerificationPress ? 0.8 : 1}
+      >
         <View style={styles.verificationHeader}>
-          <Ionicons 
+          <Ionicons
             name={verificationResult.isFake ? 'alert-circle' : 'checkmark-circle'}
             size={24}
             color={verificationResult.isFake ? '#ff3b30' : '#34c759'}
@@ -54,6 +61,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           ]}>
             {verificationResult.isFake ? 'Potentially False' : 'Likely True'}
           </Text>
+          {onVerificationPress && (
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={colors.text + '60'}
+              style={{ marginLeft: 'auto' }}
+            />
+          )}
         </View>
         
         <Text style={[styles.confidenceText, { color: colors.text }]}>
@@ -78,7 +93,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             ))}
           </View>
         )}
-      </View>
+      </BubbleComponent>
     );
   }
 
@@ -94,16 +109,16 @@ const styles = StyleSheet.create({
     maxWidth: '85%',
     padding: 16,
     borderRadius: 18,
-    marginVertical: 6,
+    marginVertical: 10, // Increased from 6 to prevent clustering
     marginHorizontal: 12,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 1,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08, // Reduced to minimize overlap effect
     shadowRadius: 2,
-    elevation: 2,
+    elevation: 1, // Reduced elevation to prevent overlap
   },
   userBubble: {
     alignSelf: 'flex-end',
