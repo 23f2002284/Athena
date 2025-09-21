@@ -1,9 +1,9 @@
 # Python
 __pycache__/
-*.py[cod]
+
 *$py.class
 *.so
-.Python
+
 *.egg-info/
 dist/
 build/
@@ -25,7 +25,7 @@ test_*.py
 *_test.py
 
 # Frontend (if deploying only backend)
-frontend/
+
 node_modules/
 package*.json
 
@@ -33,11 +33,7 @@ package*.json
 browser-extension/
 
 # Other unnecessary files
-educational_tool/
-Claim_Handle/
-Claim_Verification/
-src/
-utils/
+
 *.md
 !backend/README.md
 *.txt
