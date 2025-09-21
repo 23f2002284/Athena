@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "description": "Athena Fact Checker API Routes",
+  "include": [
+    "/api/*"
+  ],
+  "exclude": [
+    "/frontend/*",
+    "/static/*"
+  ]
+}
