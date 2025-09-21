@@ -25,9 +25,8 @@ test_*.py
 *_test.py
 
 # Frontend (if deploying only backend)
-
+frontend/
 node_modules/
-package*.json
 
 # Browser extension
 browser-extension/
