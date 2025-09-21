@@ -1,269 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Athena Extension Settings</title>
-  <link rel="stylesheet" href="options.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athena Fact Checker - Settings</title>
+    <link rel="stylesheet" href="options.css">
 </head>
 <body>
-  <!-- Header -->
-  <header class="header">
     <div class="container">
-      <div class="logo">
-        <img src="../icons/icon48.png" alt="Athena" class="logo-icon">
-        <div>
-          <h1 class="title">Athena Fact Checker</h1>
-          <p class="subtitle">Browser Extension Settings</p>
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <span class="logo-icon">🔍</span>
+                <span class="logo-text">Athena Settings</span>
+            </div>
+            <div class="version">v1.0.0</div>
         </div>
-      </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Connection Settings -->
+            <div class="section">
+                <h2>Connection Settings</h2>
+                <div class="setting-group">
+                    <label for="apiEndpoint">API Endpoint</label>
+                    <div class="input-with-test">
+                        <input type="url" id="apiEndpoint" placeholder="http://localhost:8000" />
+                        <button id="testConnectionBtn" class="test-btn">Test</button>
+                    </div>
+                    <div class="setting-description">
+                        The URL of your Athena backend server. Make sure the server is running before testing.
+                    </div>
+                    <div id="connectionStatus" class="connection-status"></div>
+                </div>
+            </div>
+
+            <!-- Behavior Settings -->
+            <div class="section">
+                <h2>Behavior Settings</h2>
+
+                <div class="setting-group">
+                    <div class="setting-row">
+                        <label for="highlightResults">Highlight Results</label>
+                        <input type="checkbox" id="highlightResults" class="toggle" />
+                    </div>
+                    <div class="setting-description">
+                        Automatically highlight fact-checked text on web pages with color-coded results.
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <div class="setting-row">
+                        <label for="contextMenuEnabled">Context Menu</label>
+                        <input type="checkbox" id="contextMenuEnabled" class="toggle" />
+                    </div>
+                    <div class="setting-description">
+                        Enable right-click context menu for quick fact-checking of selected text.
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <div class="setting-row">
+                        <label for="autoFactCheck">Auto Fact-Check</label>
+                        <input type="checkbox" id="autoFactCheck" class="toggle" />
+                    </div>
+                    <div class="setting-description">
+                        Automatically fact-check news articles and claims when they are detected.
+                        <span class="experimental-badge">Experimental</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Management -->
+            <div class="section">
+                <h2>Data Management</h2>
+
+                <div class="setting-group">
+                    <div class="data-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Fact-checks performed:</span>
+                            <span id="totalFactChecks" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">History items:</span>
+                            <span id="historyCount" class="stat-value">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <div class="data-actions">
+                        <button id="exportHistoryBtn" class="secondary-btn">Export History</button>
+                        <button id="clearHistoryBtn" class="danger-btn">Clear History</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- About Section -->
+            <div class="section">
+                <h2>About Athena</h2>
+
+                <div class="about-content">
+                    <p>
+                        Athena Fact Checker is an AI-powered browser extension that helps you verify information
+                        across the web. It uses advanced natural language processing to analyze claims and
+                        cross-reference them with reliable sources.
+                    </p>
+
+                    <div class="features-list">
+                        <h3>Features:</h3>
+                        <ul>
+                            <li>Real-time fact-checking of selected text</li>
+                            <li>Automatic page content analysis</li>
+                            <li>Source verification and citation</li>
+                            <li>Confidence scoring for fact-check results</li>
+                            <li>History tracking and export</li>
+                        </ul>
+                    </div>
+
+                    <div class="support-links">
+                        <h3>Support & Resources:</h3>
+                        <div class="link-grid">
+                            <a href="#" class="support-link" id="helpLink">
+                                <span class="link-icon">📖</span>
+                                <span>User Guide</span>
+                            </a>
+                            <a href="#" class="support-link" id="reportIssueLink">
+                                <span class="link-icon">🐛</span>
+                                <span>Report Issue</span>
+                            </a>
+                            <a href="#" class="support-link" id="privacyLink">
+                                <span class="link-icon">🔒</span>
+                                <span>Privacy Policy</span>
+                            </a>
+                            <a href="#" class="support-link" id="sourceCodeLink">
+                                <span class="link-icon">💻</span>
+                                <span>Source Code</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="save-section">
+                <button id="saveBtn" class="primary-btn">Save Settings</button>
+                <div id="saveStatus" class="save-status"></div>
+            </div>
+        </div>
     </div>
-  </header>
 
-  <!-- Welcome Banner (shown only on first install) -->
-  <div id="welcomeBanner" class="welcome-banner hidden">
-    <div class="container">
-      <div class="welcome-content">
-        <h2>Welcome to Athena! 🎉</h2>
-        <p>Your AI-powered fact-checking companion is ready to help you verify information across the web.</p>
-        <div class="welcome-features">
-          <div class="feature">
-            <span class="feature-icon">✨</span>
-            <span>Select text on any webpage to fact-check instantly</span>
-          </div>
-          <div class="feature">
-            <span class="feature-icon">🔍</span>
-            <span>Right-click to access fact-checking options</span>
-          </div>
-          <div class="feature">
-            <span class="feature-icon">⚡</span>
-            <span>Get quick results with confidence scores</span>
-          </div>
-        </div>
-        <button id="dismissWelcome" class="btn-primary">Get Started</button>
-      </div>
-    </div>
-  </div>
+    <!-- Success/Error Messages -->
+    <div id="messageContainer" class="message-container"></div>
 
-  <!-- Main Content -->
-  <main class="main">
-    <div class="container">
-      <!-- Status Card -->
-      <div class="card status-card">
-        <div class="card-header">
-          <h2>Extension Status</h2>
-          <div class="status-indicator" id="statusIndicator">
-            <span class="status-dot"></span>
-            <span class="status-text">Active</span>
-          </div>
-        </div>
-        <div class="card-content">
-          <div class="stats-grid">
-            <div class="stat">
-              <div class="stat-number" id="totalChecks">0</div>
-              <div class="stat-label">Total Fact Checks</div>
-            </div>
-            <div class="stat">
-              <div class="stat-number" id="todayChecks">0</div>
-              <div class="stat-label">Today</div>
-            </div>
-            <div class="stat">
-              <div class="stat-number" id="cacheSize">0</div>
-              <div class="stat-label">Cached Results</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Settings Sections -->
-      <div class="settings-grid">
-        <!-- General Settings -->
-        <div class="card">
-          <div class="card-header">
-            <h3>General Settings</h3>
-            <p class="card-subtitle">Basic extension behavior</p>
-          </div>
-          <div class="card-content">
-            <div class="setting">
-              <div class="setting-info">
-                <label for="enabled" class="setting-label">Enable Extension</label>
-                <p class="setting-description">Turn the extension on or off</p>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="enabled" checked>
-                <span class="slider"></span>
-              </label>
-            </div>
-
-            <div class="setting">
-              <div class="setting-info">
-                <label for="quickFactCheck" class="setting-label">Quick Fact Check</label>
-                <p class="setting-description">Show fact-check tooltip when selecting text</p>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="quickFactCheck" checked>
-                <span class="slider"></span>
-              </label>
-            </div>
-
-            <div class="setting">
-              <div class="setting-info">
-                <label for="showTooltips" class="setting-label">Show Tooltips</label>
-                <p class="setting-description">Display helpful tooltips and hints</p>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="showTooltips" checked>
-                <span class="slider"></span>
-              </label>
-            </div>
-
-            <div class="setting">
-              <div class="setting-info">
-                <label for="autoAnalyze" class="setting-label">Auto-Analyze Pages</label>
-                <p class="setting-description">Automatically analyze news articles when visiting pages</p>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="autoAnalyze">
-                <span class="slider"></span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <!-- Performance Settings -->
-        <div class="card">
-          <div class="card-header">
-            <h3>Performance</h3>
-            <p class="card-subtitle">Optimization and caching</p>
-          </div>
-          <div class="card-content">
-            <div class="setting">
-              <div class="setting-info">
-                <label for="confidenceThreshold" class="setting-label">Confidence Threshold</label>
-                <p class="setting-description">Minimum confidence level for results (70%)</p>
-              </div>
-              <div class="range-input">
-                <input type="range" id="confidenceThreshold" min="50" max="95" value="70">
-                <span class="range-value">70%</span>
-              </div>
-            </div>
-
-            <div class="setting">
-              <div class="setting-info">
-                <label class="setting-label">Cache Management</label>
-                <p class="setting-description">Clear cached fact-check results</p>
-              </div>
-              <button id="clearCache" class="btn-secondary">Clear Cache</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- API Settings -->
-        <div class="card">
-          <div class="card-header">
-            <h3>API Configuration</h3>
-            <p class="card-subtitle">Backend service connection</p>
-          </div>
-          <div class="card-content">
-            <div class="setting">
-              <div class="setting-info">
-                <label for="apiEndpoint" class="setting-label">API Endpoint</label>
-                <p class="setting-description">Athena backend service URL</p>
-              </div>
-              <input type="url" id="apiEndpoint" class="text-input" value="http://localhost:8000" placeholder="http://localhost:8000">
-            </div>
-
-            <div class="setting">
-              <div class="setting-info">
-                <label class="setting-label">Connection Status</label>
-                <p class="setting-description">Test connection to backend service</p>
-              </div>
-              <div class="connection-status">
-                <button id="testConnection" class="btn-secondary">Test Connection</button>
-                <div class="connection-result" id="connectionResult"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Privacy Settings -->
-        <div class="card">
-          <div class="card-header">
-            <h3>Privacy & Data</h3>
-            <p class="card-subtitle">Data handling preferences</p>
-          </div>
-          <div class="card-content">
-            <div class="setting">
-              <div class="setting-info">
-                <label class="setting-label">Activity History</label>
-                <p class="setting-description">Keep history of fact-check activities</p>
-              </div>
-              <div class="privacy-actions">
-                <button id="viewHistory" class="btn-secondary">View History</button>
-                <button id="clearHistory" class="btn-secondary">Clear History</button>
-              </div>
-            </div>
-
-            <div class="setting">
-              <div class="setting-info">
-                <label class="setting-label">Data Export</label>
-                <p class="setting-description">Export your settings and data</p>
-              </div>
-              <div class="export-actions">
-                <button id="exportData" class="btn-secondary">Export Data</button>
-                <button id="importData" class="btn-secondary">Import Data</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Recent Activity -->
-      <div class="card recent-activity">
-        <div class="card-header">
-          <h3>Recent Activity</h3>
-          <p class="card-subtitle">Your latest fact-checks</p>
-        </div>
-        <div class="card-content">
-          <div id="activityList" class="activity-list">
-            <!-- Activity items will be populated here -->
-          </div>
-          <div class="activity-empty" id="activityEmpty">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,17A1.5,1.5 0 0,1 10.5,15.5A1.5,1.5 0 0,1 12,14A1.5,1.5 0 0,1 13.5,15.5A1.5,1.5 0 0,1 12,17M12,10.5A1.5,1.5 0 0,1 10.5,9A1.5,1.5 0 0,1 12,7.5A1.5,1.5 0 0,1 13.5,9A1.5,1.5 0 0,1 12,10.5Z"/>
-            </svg>
-            <p>No recent activity</p>
-            <p class="empty-subtitle">Start fact-checking content to see your activity here</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-content">
-        <div class="footer-links">
-          <a href="#" id="aboutLink">About Athena</a>
-          <a href="#" id="helpLink">Help & Support</a>
-          <a href="#" id="privacyLink">Privacy Policy</a>
-          <a href="#" id="githubLink">GitHub</a>
-        </div>
-        <div class="footer-info">
-          <p>&copy; 2024 Athena Fact Checker. AI-powered truth verification.</p>
-          <p>Version 1.0.0</p>
-        </div>
-      </div>
-    </div>
-  </footer>
-
-  <!-- Hidden file input for data import -->
-  <input type="file" id="importFile" accept=".json" style="display: none;">
-
-  <!-- Toast notifications -->
-  <div id="toastContainer" class="toast-container"></div>
-
-  <script src="options.js"></script>
+    <script src="options.js"></script>
 </body>
 </html>

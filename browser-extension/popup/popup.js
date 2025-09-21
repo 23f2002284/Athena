@@ -1,390 +1,489 @@
-// Athena Browser Extension - Popup Script
+// Athena Fact Checker Popup Script
+
 class AthenaPopup {
-  constructor() {
-    this.apiBaseUrl = 'http://localhost:8000';
-    this.currentResults = null;
-    this.init();
-  }
-
-  init() {
-    this.setupEventListeners();
-    this.updateCharCount();
-    this.loadSelectedText();
-    this.restoreState();
-  }
-
-  setupEventListeners() {
-    // Input and controls
-    const input = document.getElementById('factCheckInput');
-    const pasteBtn = document.getElementById('pasteBtn');
-    const clearBtn = document.getElementById('clearBtn');
-    const factCheckBtn = document.getElementById('factCheckBtn');
-
-    // Quick actions
-    const selectedTextBtn = document.getElementById('selectedTextBtn');
-    const pageUrlBtn = document.getElementById('pageUrlBtn');
-
-    // Result actions
-    const shareBtn = document.getElementById('shareBtn');
-    const reportBtn = document.getElementById('reportBtn');
-    const newCheckBtn = document.getElementById('newCheckBtn');
-
-    // Footer buttons
-    const settingsBtn = document.getElementById('settingsBtn');
-    const helpBtn = document.getElementById('helpBtn');
-
-    // Event listeners
-    input.addEventListener('input', () => {
-      this.updateCharCount();
-      this.toggleFactCheckButton();
-    });
-
-    pasteBtn.addEventListener('click', () => this.pasteFromClipboard());
-    clearBtn.addEventListener('click', () => this.clearInput());
-    factCheckBtn.addEventListener('click', () => this.performFactCheck());
-
-    selectedTextBtn.addEventListener('click', () => this.checkSelectedText());
-    pageUrlBtn.addEventListener('click', () => this.checkCurrentPage());
-
-    shareBtn.addEventListener('click', () => this.shareResults());
-    reportBtn.addEventListener('click', () => this.reportResults());
-    newCheckBtn.addEventListener('click', () => this.newCheck());
-
-    settingsBtn.addEventListener('click', () => this.openSettings());
-    helpBtn.addEventListener('click', () => this.openHelp());
-  }
-
-  updateCharCount() {
-    const input = document.getElementById('factCheckInput');
-    const charCount = document.querySelector('.char-count');
-    const count = input.value.length;
-    charCount.textContent = `${count}/2000`;
-
-    if (count > 1800) {
-      charCount.style.color = '#dc2626';
-    } else if (count > 1500) {
-      charCount.style.color = '#d97706';
-    } else {
-      charCount.style.color = '#8892b0';
+    constructor() {
+        this.apiEndpoint = 'http://localhost:8000';
+        this.isFactChecking = false;
+        this.currentTab = null;
+        this.init();
     }
-  }
 
-  toggleFactCheckButton() {
-    const input = document.getElementById('factCheckInput');
-    const factCheckBtn = document.getElementById('factCheckBtn');
-    factCheckBtn.disabled = input.value.trim().length === 0;
-  }
-
-  async pasteFromClipboard() {
-    try {
-      const text = await navigator.clipboard.readText();
-      const input = document.getElementById('factCheckInput');
-      input.value = text.substring(0, 2000);
-      this.updateCharCount();
-      this.toggleFactCheckButton();
-    } catch (error) {
-      console.error('Failed to paste from clipboard:', error);
-      this.showNotification('Failed to paste from clipboard', 'error');
+    async init() {
+        await this.loadSettings();
+        this.setupEventListeners();
+        this.checkConnection();
+        this.getCurrentTab();
     }
-  }
 
-  clearInput() {
-    const input = document.getElementById('factCheckInput');
-    input.value = '';
-    this.updateCharCount();
-    this.toggleFactCheckButton();
-    input.focus();
-  }
-
-  async loadSelectedText() {
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      const results = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        function: () => window.getSelection().toString()
-      });
-
-      const selectedText = results[0]?.result?.trim();
-      if (selectedText && selectedText.length > 0) {
-        const selectedTextBtn = document.getElementById('selectedTextBtn');
-        selectedTextBtn.style.background = '#e0e7ff';
-        selectedTextBtn.style.borderColor = '#667eea';
-        selectedTextBtn.style.color = '#667eea';
-
-        // Store selected text for quick access
-        this.selectedText = selectedText;
-      }
-    } catch (error) {
-      console.error('Failed to get selected text:', error);
+    async loadSettings() {
+        try {
+            const result = await chrome.storage.sync.get(['apiEndpoint']);
+            if (result.apiEndpoint) {
+                this.apiEndpoint = result.apiEndpoint;
+            }
+        } catch (error) {
+            console.error('Error loading settings:', error);
+        }
     }
-  }
 
-  async checkSelectedText() {
-    if (this.selectedText) {
-      const input = document.getElementById('factCheckInput');
-      input.value = this.selectedText.substring(0, 2000);
-      this.updateCharCount();
-      this.toggleFactCheckButton();
-      await this.performFactCheck();
-    } else {
-      this.showNotification('No text is currently selected on the page', 'info');
+    async getCurrentTab() {
+        try {
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            this.currentTab = tab;
+        } catch (error) {
+            console.error('Error getting current tab:', error);
+        }
     }
-  }
 
-  async checkCurrentPage() {
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      const input = document.getElementById('factCheckInput');
-      input.value = tab.url;
-      this.updateCharCount();
-      this.toggleFactCheckButton();
-      await this.performFactCheck();
-    } catch (error) {
-      console.error('Failed to get current page URL:', error);
-      this.showNotification('Failed to get current page URL', 'error');
+    setupEventListeners() {
+        // Fact check button
+        document.getElementById('factCheckBtn').addEventListener('click', () => {
+            this.handleFactCheck();
+        });
+
+        // Get selected text button
+        document.getElementById('getSelectedBtn').addEventListener('click', () => {
+            this.getSelectedText();
+        });
+
+        // Analyze page button
+        document.getElementById('analyzePageBtn').addEventListener('click', () => {
+            this.analyzePage();
+        });
+
+        // Settings button
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            this.openSettings();
+        });
+
+        // History button
+        document.getElementById('historyBtn').addEventListener('click', () => {
+            this.showHistory();
+        });
+
+        // Close results button
+        document.getElementById('closeResults').addEventListener('click', () => {
+            this.hideResults();
+        });
+
+        // Footer links
+        document.getElementById('helpLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.showHelp();
+        });
+
+        document.getElementById('aboutLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.showAbout();
+        });
+
+        // Text input enter key
+        document.getElementById('textInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                this.handleFactCheck();
+            }
+        });
     }
-  }
 
-  async performFactCheck() {
-    const input = document.getElementById('factCheckInput');
-    const text = input.value.trim();
+    async handleFactCheck() {
+        const textInput = document.getElementById('textInput');
+        const text = textInput.value.trim();
 
-    if (!text) return;
-
-    this.showLoading(true);
-    this.hideResults();
-
-    try {
-      // Call Athena API
-      const response = await fetch(`${this.apiBaseUrl}/api/fact-check`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: text,
-          pipeline: 'fact'
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const startResult = await response.json();
-      console.log('Fact-check started:', startResult);
-
-      // Poll for results
-      await this.pollForResults();
-
-    } catch (error) {
-      console.error('Fact-check error:', error);
-      this.showLoading(false);
-      this.showNotification('Failed to perform fact-check. Please check your connection.', 'error');
-    }
-  }
-
-  async pollForResults() {
-    let attempts = 0;
-    const maxAttempts = 30;
-
-    const poll = async () => {
-      try {
-        attempts++;
-        const response = await fetch(`${this.apiBaseUrl}/api/fact-check-result`);
-
-        if (response.ok) {
-          const data = await response.json();
-
-          if (data.status === 'complete' && data.result) {
-            this.showLoading(false);
-            this.displayResults(data.result);
-            this.saveState({ results: data.result });
+        if (!text) {
+            this.showError('Please enter some text to fact-check');
             return;
-          }
         }
 
-        if (attempts >= maxAttempts) {
-          throw new Error('Timeout: Analysis taking too long');
+        if (this.isFactChecking) {
+            return;
         }
 
-        // Continue polling
+        this.isFactChecking = true;
+        this.showLoading(true);
+        this.updateStatus('Fact-checking...', 'loading');
+
+        try {
+            // Send fact-check request to backend
+            const response = await fetch(`${this.apiEndpoint}/api/fact-check`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    text: text,
+                    pipeline: 'fact'
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('Fact-check started:', result);
+
+            // Start polling for results
+            this.pollForResults();
+
+            // Also send message to content script
+            if (this.currentTab) {
+                chrome.tabs.sendMessage(this.currentTab.id, {
+                    action: 'factCheckText',
+                    text: text
+                }).catch(() => {
+                    // Content script might not be loaded, that's okay
+                });
+            }
+
+        } catch (error) {
+            console.error('Error starting fact-check:', error);
+            this.showError('Failed to start fact-check. Please check your connection.');
+            this.isFactChecking = false;
+            this.showLoading(false);
+            this.updateStatus('Error', 'error');
+        }
+    }
+
+    async pollForResults() {
+        const maxAttempts = 30; // 30 attempts
+        let attempts = 0;
+
+        const poll = async () => {
+            attempts++;
+
+            try {
+                const response = await fetch(`${this.apiEndpoint}/api/fact-check-result`);
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Check if we have a real result (not processing)
+                    if (data.verdict && data.verdict !== 'Processing' && data.response && !data.response.includes('processing')) {
+                        this.displayResults(data);
+                        this.isFactChecking = false;
+                        this.showLoading(false);
+                        this.updateStatus('Complete', 'connected');
+                        return;
+                    }
+                }
+
+                // Continue polling if we haven't reached max attempts
+                if (attempts < maxAttempts) {
+                    setTimeout(poll, 2000); // Poll every 2 seconds
+                } else {
+                    throw new Error('Timeout waiting for results');
+                }
+
+            } catch (error) {
+                console.error('Error polling results:', error);
+                this.showError('Timeout waiting for results. Please try again.');
+                this.isFactChecking = false;
+                this.showLoading(false);
+                this.updateStatus('Error', 'error');
+            }
+        };
+
+        // Start polling after a short delay
         setTimeout(poll, 1000);
-
-      } catch (error) {
-        console.error('Polling error:', error);
-        this.showLoading(false);
-        this.showNotification('Analysis timed out. Please try again.', 'error');
-      }
-    };
-
-    poll();
-  }
-
-  displayResults(result) {
-    this.currentResults = result;
-
-    // Determine verdict
-    const isSupported = !result.is_fake && result.verdict?.toLowerCase() !== 'false';
-    const verdictStatus = isSupported ? 'supported' : 'refuted';
-    const confidence = result.confidence ? Math.round(result.confidence * 100) : 85;
-
-    // Update verdict badge
-    const verdictBadge = document.getElementById('verdictBadge');
-    const verdictIcon = document.getElementById('verdictIcon');
-    const verdictText = document.getElementById('verdictText');
-    const confidenceScore = document.getElementById('confidenceScore');
-
-    verdictBadge.className = `verdict-badge ${verdictStatus}`;
-    verdictIcon.textContent = isSupported ? '✓' : '✗';
-    verdictText.textContent = isSupported ? 'Supported' : 'Refuted';
-    confidenceScore.textContent = `${confidence}%`;
-
-    // Update explanation
-    const explanation = document.getElementById('explanation');
-    explanation.textContent = result.explanation || result.processed_answer || 'Analysis completed.';
-
-    // Update sources
-    this.displaySources(result.sources || []);
-
-    this.showResults();
-  }
-
-  displaySources(sources) {
-    const sourcesList = document.getElementById('sourcesList');
-    sourcesList.innerHTML = '';
-
-    if (!sources || sources.length === 0) {
-      sourcesList.innerHTML = '<div style="color: #8892b0; font-style: italic;">No sources available</div>';
-      return;
     }
 
-    sources.slice(0, 3).forEach(source => {
-      const sourceItem = document.createElement('div');
-      sourceItem.className = 'source-item';
+    displayResults(data) {
+        const resultsSection = document.getElementById('resultsSection');
+        const resultsContent = document.getElementById('resultsContent');
 
-      const title = source.title || source.url || 'Source';
-      const domain = source.domain || this.extractDomain(source.url) || '';
-      const url = source.url || '#';
+        // Parse the result
+        let verdict = data.verdict || 'Unknown';
+        let confidence = data.confidence || 50;
+        let explanation = data.detailed_explanation || '';
 
-      sourceItem.innerHTML = `
-        <svg class="source-icon" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z"/>
-        </svg>
-        <a href="${url}" target="_blank" class="source-title">${title}</a>
-        <span class="source-domain">${domain}</span>
-      `;
+        // Extract verdict and confidence from response if not provided separately
+        if (!data.verdict && data.response) {
+            const lines = data.response.split('\n');
+            if (lines[0]) verdict = lines[0].trim();
 
-      sourcesList.appendChild(sourceItem);
-    });
-  }
+            const confidenceMatch = data.response.match(/Confidence:\s*(\d+)%/);
+            if (confidenceMatch) confidence = parseInt(confidenceMatch[1]);
 
-  extractDomain(url) {
-    try {
-      return new URL(url).hostname;
-    } catch {
-      return '';
+            const explanationStart = data.response.indexOf('\n\n');
+            if (explanationStart > -1) {
+                explanation = data.response.substring(explanationStart + 2).trim();
+                explanation = explanation.replace(/\n\nSources verified:.*$/, '').trim();
+            }
+        }
+
+        // Determine result type
+        const isFactual = verdict.toLowerCase().includes('true') || verdict.toLowerCase().includes('supported');
+        const isFalse = verdict.toLowerCase().includes('false') || verdict.toLowerCase().includes('refuted');
+        const resultType = isFactual ? 'factual' : isFalse ? 'false' : 'insufficient';
+
+        // Create result HTML
+        let resultHTML = `
+            <div class="result-item ${resultType}">
+                <div class="result-verdict ${resultType}">${verdict}</div>
+                <div class="result-confidence">Confidence: ${confidence}%</div>
+                <div class="result-explanation">${explanation || 'Analysis complete.'}</div>
+        `;
+
+        // Add sources if available
+        if (data.sources && Array.isArray(data.sources) && data.sources.length > 0) {
+            resultHTML += `
+                <div class="result-sources">
+                    <h4>Sources:</h4>
+                    <div class="source-list">
+            `;
+
+            data.sources.forEach(source => {
+                if (typeof source === 'object' && source.url && source.title) {
+                    resultHTML += `<a href="${source.url}" class="source-link" target="_blank">${source.title}</a>`;
+                } else if (typeof source === 'string' && source.startsWith('http')) {
+                    resultHTML += `<a href="${source}" class="source-link" target="_blank">${source}</a>`;
+                }
+            });
+
+            resultHTML += `
+                    </div>
+                </div>
+            `;
+        }
+
+        resultHTML += '</div>';
+
+        resultsContent.innerHTML = resultHTML;
+        resultsSection.style.display = 'block';
+
+        // Save to history
+        this.saveToHistory({
+            text: document.getElementById('textInput').value.trim(),
+            verdict,
+            confidence,
+            explanation,
+            sources: data.sources || [],
+            timestamp: new Date().toISOString()
+        });
     }
-  }
 
-  showLoading(show) {
-    const loadingState = document.getElementById('loadingState');
-    loadingState.classList.toggle('hidden', !show);
-  }
+    async getSelectedText() {
+        if (!this.currentTab) {
+            this.showError('Unable to access current tab');
+            return;
+        }
 
-  showResults() {
-    const resultsSection = document.getElementById('resultsSection');
-    resultsSection.classList.remove('hidden');
-  }
+        try {
+            const response = await chrome.tabs.sendMessage(this.currentTab.id, {
+                action: 'getSelectedText'
+            });
 
-  hideResults() {
-    const resultsSection = document.getElementById('resultsSection');
-    resultsSection.classList.add('hidden');
-  }
-
-  async shareResults() {
-    if (!this.currentResults) return;
-
-    const text = `Fact-check result: ${this.currentResults.explanation || 'Analysis completed'} - Verified by Athena AI`;
-
-    try {
-      await navigator.clipboard.writeText(text);
-      this.showNotification('Results copied to clipboard', 'success');
-    } catch (error) {
-      console.error('Failed to copy results:', error);
-      this.showNotification('Failed to copy results', 'error');
+            if (response && response.selectedText) {
+                document.getElementById('textInput').value = response.selectedText;
+            } else {
+                this.showError('No text selected on the page');
+            }
+        } catch (error) {
+            console.error('Error getting selected text:', error);
+            this.showError('Unable to get selected text. Make sure you have text selected on the page.');
+        }
     }
-  }
 
-  reportResults() {
-    // Open feedback form or report mechanism
-    chrome.tabs.create({
-      url: 'https://github.com/your-repo/athena/issues/new?template=fact-check-feedback.md'
-    });
-  }
+    async analyzePage() {
+        if (!this.currentTab) {
+            this.showError('Unable to access current tab');
+            return;
+        }
 
-  newCheck() {
-    this.clearInput();
-    this.hideResults();
-    this.currentResults = null;
-    this.clearState();
-  }
+        try {
+            const response = await chrome.tabs.sendMessage(this.currentTab.id, {
+                action: 'getPageContent'
+            });
 
-  openSettings() {
-    chrome.runtime.openOptionsPage();
-  }
-
-  openHelp() {
-    chrome.tabs.create({
-      url: 'https://github.com/your-repo/athena#browser-extension'
-    });
-  }
-
-  showNotification(message, type = 'info') {
-    // Simple notification system
-    const notification = document.createElement('div');
-    notification.style.cssText = `
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      background: ${type === 'error' ? '#fee2e2' : type === 'success' ? '#dcfce7' : '#e0e7ff'};
-      color: ${type === 'error' ? '#dc2626' : type === 'success' ? '#16a34a' : '#1e40af'};
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      z-index: 1000;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    `;
-    notification.textContent = message;
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-      notification.remove();
-    }, 3000);
-  }
-
-  // State management
-  saveState(state) {
-    chrome.storage.local.set({ athenaPopupState: state });
-  }
-
-  clearState() {
-    chrome.storage.local.remove('athenaPopupState');
-  }
-
-  async restoreState() {
-    try {
-      const result = await chrome.storage.local.get('athenaPopupState');
-      if (result.athenaPopupState?.results) {
-        this.displayResults(result.athenaPopupState.results);
-      }
-    } catch (error) {
-      console.error('Failed to restore state:', error);
+            if (response && response.pageContent) {
+                // Use the main content for fact-checking
+                const content = response.pageContent.mainContent;
+                if (content && content.length > 50) {
+                    document.getElementById('textInput').value = content.substring(0, 1000) + '...';
+                } else {
+                    this.showError('Unable to extract meaningful content from this page');
+                }
+            } else {
+                this.showError('Unable to analyze this page');
+            }
+        } catch (error) {
+            console.error('Error analyzing page:', error);
+            this.showError('Unable to analyze this page. The page may not support content extraction.');
+        }
     }
-  }
+
+    openSettings() {
+        chrome.runtime.openOptionsPage();
+    }
+
+    async showHistory() {
+        try {
+            const result = await chrome.storage.local.get(['factCheckHistory']);
+            const history = result.factCheckHistory || [];
+
+            if (history.length === 0) {
+                this.showError('No fact-check history found');
+                return;
+            }
+
+            // Show recent history in results section
+            const resultsSection = document.getElementById('resultsSection');
+            const resultsContent = document.getElementById('resultsContent');
+
+            let historyHTML = '<div class="history-list">';
+
+            history.slice(-5).reverse().forEach((item, index) => {
+                const date = new Date(item.timestamp).toLocaleDateString();
+                const preview = item.text.substring(0, 100) + (item.text.length > 100 ? '...' : '');
+
+                historyHTML += `
+                    <div class="history-item" data-index="${index}">
+                        <div class="history-preview">${preview}</div>
+                        <div class="history-meta">
+                            <span class="history-verdict ${item.verdict.toLowerCase().includes('true') ? 'factual' : item.verdict.toLowerCase().includes('false') ? 'false' : 'insufficient'}">${item.verdict}</span>
+                            <span class="history-date">${date}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            historyHTML += '</div>';
+
+            resultsContent.innerHTML = historyHTML;
+            resultsSection.style.display = 'block';
+
+            // Add click handlers for history items
+            document.querySelectorAll('.history-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const index = parseInt(item.dataset.index);
+                    const historyItem = history[history.length - 1 - index];
+                    document.getElementById('textInput').value = historyItem.text;
+                    this.hideResults();
+                });
+            });
+
+        } catch (error) {
+            console.error('Error loading history:', error);
+            this.showError('Error loading history');
+        }
+    }
+
+    async saveToHistory(item) {
+        try {
+            const result = await chrome.storage.local.get(['factCheckHistory']);
+            const history = result.factCheckHistory || [];
+
+            history.push(item);
+
+            // Keep only last 50 items
+            if (history.length > 50) {
+                history.splice(0, history.length - 50);
+            }
+
+            await chrome.storage.local.set({ factCheckHistory: history });
+        } catch (error) {
+            console.error('Error saving to history:', error);
+        }
+    }
+
+    hideResults() {
+        document.getElementById('resultsSection').style.display = 'none';
+    }
+
+    showLoading(show) {
+        const overlay = document.getElementById('loadingOverlay');
+        const button = document.getElementById('factCheckBtn');
+        const spinner = button.querySelector('.btn-spinner');
+        const text = button.querySelector('.btn-text');
+
+        if (show) {
+            overlay.style.display = 'flex';
+            button.disabled = true;
+            spinner.style.display = 'block';
+            text.style.opacity = '0';
+        } else {
+            overlay.style.display = 'none';
+            button.disabled = false;
+            spinner.style.display = 'none';
+            text.style.opacity = '1';
+        }
+    }
+
+    showError(message) {
+        // Simple alert for now - could be improved with a toast notification
+        alert(message);
+    }
+
+    updateStatus(text, type = 'default') {
+        const statusText = document.getElementById('statusText');
+        const statusDot = document.getElementById('statusDot');
+
+        statusText.textContent = text;
+        statusDot.className = `status-dot ${type}`;
+    }
+
+    async checkConnection() {
+        try {
+            const response = await fetch(`${this.apiEndpoint}/api/health`, {
+                method: 'GET',
+                timeout: 5000
+            });
+
+            if (response.ok) {
+                this.updateStatus('Connected', 'connected');
+                document.getElementById('connectionStatus').textContent = this.apiEndpoint;
+            } else {
+                throw new Error('Health check failed');
+            }
+        } catch (error) {
+            console.error('Connection check failed:', error);
+            this.updateStatus('Disconnected', 'error');
+            document.getElementById('connectionStatus').textContent = 'Connection failed';
+        }
+    }
+
+    showHelp() {
+        const helpText = `
+Athena Fact Checker Help:
+
+1. Enter text in the input field or select text on any webpage
+2. Click "Get Selected" to import highlighted text from the page
+3. Click "Fact Check" to analyze the information
+4. Use "Analyze Page" to fact-check the main content of the current page
+5. View your recent fact-checks in History
+
+Keyboard Shortcuts:
+- Ctrl+Shift+F: Fact-check selected text on any page
+- Ctrl+Enter: Fact-check text in popup
+
+For support, visit the extension settings.
+        `;
+
+        alert(helpText);
+    }
+
+    showAbout() {
+        const aboutText = `
+Athena Fact Checker v1.0.0
+
+AI-powered fact-checking extension that helps you verify information across the web.
+
+Features:
+- Real-time fact-checking
+- Website content analysis
+- Source verification
+- Fact-check history
+
+Powered by advanced AI models and reliable source verification.
+
+© 2024 Athena Fact Checker
+        `;
+
+        alert(aboutText);
+    }
 }
 
 // Initialize popup when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  new AthenaPopup();
+    new AthenaPopup();
 });

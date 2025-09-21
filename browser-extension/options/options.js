@@ -1,495 +1,453 @@
-// Athena Browser Extension - Options Page
-class AthenaOptionsPage {
-  constructor() {
-    this.settings = {};
-    this.activities = [];
-    this.init();
-  }
+// Athena Fact Checker Options Script
 
-  async init() {
-    await this.loadSettings();
-    this.setupEventListeners();
-    this.updateUI();
-    this.loadStats();
-    this.loadRecentActivity();
-    this.checkWelcomeBanner();
-  }
-
-  setupEventListeners() {
-    // Settings toggles
-    document.getElementById('enabled').addEventListener('change', (e) => {
-      this.updateSetting('enabled', e.target.checked);
-    });
-
-    document.getElementById('quickFactCheck').addEventListener('change', (e) => {
-      this.updateSetting('quickFactCheck', e.target.checked);
-    });
-
-    document.getElementById('showTooltips').addEventListener('change', (e) => {
-      this.updateSetting('showTooltips', e.target.checked);
-    });
-
-    document.getElementById('autoAnalyze').addEventListener('change', (e) => {
-      this.updateSetting('autoAnalyze', e.target.checked);
-    });
-
-    // Range input
-    const confidenceRange = document.getElementById('confidenceThreshold');
-    const confidenceValue = document.querySelector('.range-value');
-
-    confidenceRange.addEventListener('input', (e) => {
-      const value = e.target.value;
-      confidenceValue.textContent = `${value}%`;
-      this.updateSetting('confidenceThreshold', parseInt(value));
-    });
-
-    // API endpoint
-    document.getElementById('apiEndpoint').addEventListener('change', (e) => {
-      this.updateSetting('apiEndpoint', e.target.value);
-    });
-
-    // Buttons
-    document.getElementById('clearCache').addEventListener('click', () => {
-      this.clearCache();
-    });
-
-    document.getElementById('testConnection').addEventListener('click', () => {
-      this.testConnection();
-    });
-
-    document.getElementById('viewHistory').addEventListener('click', () => {
-      this.viewHistory();
-    });
-
-    document.getElementById('clearHistory').addEventListener('click', () => {
-      this.clearHistory();
-    });
-
-    document.getElementById('exportData').addEventListener('click', () => {
-      this.exportData();
-    });
-
-    document.getElementById('importData').addEventListener('click', () => {
-      this.importData();
-    });
-
-    // Import file handler
-    document.getElementById('importFile').addEventListener('change', (e) => {
-      this.handleFileImport(e);
-    });
-
-    // Welcome banner
-    document.getElementById('dismissWelcome').addEventListener('click', () => {
-      this.dismissWelcome();
-    });
-
-    // Footer links
-    document.getElementById('aboutLink').addEventListener('click', (e) => {
-      e.preventDefault();
-      this.openAbout();
-    });
-
-    document.getElementById('helpLink').addEventListener('click', (e) => {
-      e.preventDefault();
-      this.openHelp();
-    });
-
-    document.getElementById('privacyLink').addEventListener('click', (e) => {
-      e.preventDefault();
-      this.openPrivacy();
-    });
-
-    document.getElementById('githubLink').addEventListener('click', (e) => {
-      e.preventDefault();
-      this.openGitHub();
-    });
-  }
-
-  async loadSettings() {
-    try {
-      const result = await chrome.storage.sync.get('athenaSettings');
-      this.settings = result.athenaSettings || {
-        enabled: true,
-        quickFactCheck: true,
-        showTooltips: true,
-        apiEndpoint: 'http://localhost:8000',
-        autoAnalyze: false,
-        confidenceThreshold: 70
-      };
-    } catch (error) {
-      console.error('Failed to load settings:', error);
-      this.showToast('Failed to load settings', 'error');
+class AthenaOptions {
+    constructor() {
+        this.defaultSettings = {
+            apiEndpoint: 'http://localhost:8000',
+            autoFactCheck: false,
+            highlightResults: true,
+            contextMenuEnabled: true
+        };
+        this.init();
     }
-  }
 
-  updateUI() {
-    // Update form elements with current settings
-    document.getElementById('enabled').checked = this.settings.enabled;
-    document.getElementById('quickFactCheck').checked = this.settings.quickFactCheck;
-    document.getElementById('showTooltips').checked = this.settings.showTooltips;
-    document.getElementById('autoAnalyze').checked = this.settings.autoAnalyze;
-    document.getElementById('confidenceThreshold').value = this.settings.confidenceThreshold;
-    document.getElementById('apiEndpoint').value = this.settings.apiEndpoint;
-
-    // Update range display
-    document.querySelector('.range-value').textContent = `${this.settings.confidenceThreshold}%`;
-
-    // Update status indicator
-    const statusIndicator = document.getElementById('statusIndicator');
-    const statusDot = statusIndicator.querySelector('.status-dot');
-    const statusText = statusIndicator.querySelector('.status-text');
-
-    if (this.settings.enabled) {
-      statusIndicator.style.background = '#dcfce7';
-      statusIndicator.style.color = '#16a34a';
-      statusText.textContent = 'Active';
-    } else {
-      statusIndicator.style.background = '#fef2f2';
-      statusIndicator.style.color = '#dc2626';
-      statusText.textContent = 'Disabled';
+    async init() {
+        await this.loadSettings();
+        this.setupEventListeners();
+        await this.loadStats();
     }
-  }
 
-  async updateSetting(key, value) {
-    this.settings[key] = value;
+    setupEventListeners() {
+        // Save button
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            this.saveSettings();
+        });
 
-    try {
-      await chrome.storage.sync.set({ athenaSettings: this.settings });
-      this.updateUI();
+        // Test connection button
+        document.getElementById('testConnectionBtn').addEventListener('click', () => {
+            this.testConnection();
+        });
 
-      // Send message to background script
-      chrome.runtime.sendMessage({
-        action: 'updateSettings',
-        settings: this.settings
-      });
+        // Data management buttons
+        document.getElementById('exportHistoryBtn').addEventListener('click', () => {
+            this.exportHistory();
+        });
 
-    } catch (error) {
-      console.error('Failed to save settings:', error);
-      this.showToast('Failed to save settings', 'error');
+        document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+            this.clearHistory();
+        });
+
+        // Support links
+        document.getElementById('helpLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.openHelp();
+        });
+
+        document.getElementById('reportIssueLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.reportIssue();
+        });
+
+        document.getElementById('privacyLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.openPrivacy();
+        });
+
+        document.getElementById('sourceCodeLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.openSourceCode();
+        });
+
+        // Auto-save on settings change
+        const settingInputs = document.querySelectorAll('#apiEndpoint, #autoFactCheck, #highlightResults, #contextMenuEnabled');
+        settingInputs.forEach(input => {
+            input.addEventListener('change', () => {
+                this.autoSave();
+            });
+        });
+
+        // API endpoint validation
+        document.getElementById('apiEndpoint').addEventListener('blur', () => {
+            this.validateApiEndpoint();
+        });
     }
-  }
 
-  async loadStats() {
-    try {
-      // Get cache size from background
-      const cacheResponse = await chrome.runtime.sendMessage({ action: 'getCache' });
-      const cacheSize = cacheResponse.cache ? cacheResponse.cache.length : 0;
+    async loadSettings() {
+        try {
+            const result = await chrome.storage.sync.get(Object.keys(this.defaultSettings));
 
-      // Get activity data
-      const activityResult = await chrome.storage.local.get('athenaActivity');
-      const activities = activityResult.athenaActivity || [];
+            // Set values or defaults
+            for (const [key, defaultValue] of Object.entries(this.defaultSettings)) {
+                const value = result[key] !== undefined ? result[key] : defaultValue;
+                this.setFormValue(key, value);
+            }
 
-      // Calculate stats
-      const today = new Date().toDateString();
-      const todayChecks = activities.filter(activity => {
-        return new Date(activity.timestamp).toDateString() === today;
-      }).length;
-
-      // Update UI
-      document.getElementById('totalChecks').textContent = activities.length;
-      document.getElementById('todayChecks').textContent = todayChecks;
-      document.getElementById('cacheSize').textContent = cacheSize;
-
-    } catch (error) {
-      console.error('Failed to load stats:', error);
+        } catch (error) {
+            console.error('Error loading settings:', error);
+            this.showMessage('Error loading settings', 'error');
+        }
     }
-  }
 
-  async loadRecentActivity() {
-    try {
-      const result = await chrome.storage.local.get('athenaActivity');
-      this.activities = result.athenaActivity || [];
+    setFormValue(key, value) {
+        const element = document.getElementById(key);
+        if (!element) return;
 
-      const activityList = document.getElementById('activityList');
-      const activityEmpty = document.getElementById('activityEmpty');
+        if (element.type === 'checkbox') {
+            element.checked = value;
+        } else {
+            element.value = value;
+        }
+    }
 
-      if (this.activities.length === 0) {
-        activityList.style.display = 'none';
-        activityEmpty.style.display = 'block';
-        return;
-      }
+    getFormValue(key) {
+        const element = document.getElementById(key);
+        if (!element) return this.defaultSettings[key];
 
-      activityList.style.display = 'block';
-      activityEmpty.style.display = 'none';
+        if (element.type === 'checkbox') {
+            return element.checked;
+        } else {
+            return element.value;
+        }
+    }
 
-      // Show last 10 activities
-      const recentActivities = this.activities.slice(0, 10);
+    async saveSettings() {
+        const saveBtn = document.getElementById('saveBtn');
+        const saveStatus = document.getElementById('saveStatus');
 
-      activityList.innerHTML = recentActivities.map(activity => {
-        const isSupported = !activity.result?.is_fake;
-        const timeAgo = this.formatTimeAgo(activity.timestamp);
+        // Show saving state
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+        saveStatus.textContent = '';
 
-        return `
-          <div class="activity-item">
-            <div class="activity-icon ${isSupported ? 'supported' : 'refuted'}">
-              ${isSupported ? '✓' : '✗'}
-            </div>
-            <div class="activity-content">
-              <div class="activity-text">${activity.text}</div>
-              <div class="activity-meta">
-                ${isSupported ? 'Supported' : 'Refuted'} •
-                ${this.formatDomain(activity.url)}
-              </div>
-            </div>
-            <div class="activity-time">${timeAgo}</div>
-          </div>
+        try {
+            const settings = {};
+
+            for (const key of Object.keys(this.defaultSettings)) {
+                settings[key] = this.getFormValue(key);
+            }
+
+            // Validate API endpoint
+            if (settings.apiEndpoint && !this.isValidUrl(settings.apiEndpoint)) {
+                throw new Error('Invalid API endpoint URL');
+            }
+
+            await chrome.storage.sync.set(settings);
+
+            // Show success
+            saveBtn.textContent = 'Saved!';
+            saveStatus.textContent = 'Settings saved successfully';
+            saveStatus.className = 'save-status success';
+
+            this.showMessage('Settings saved successfully', 'success');
+
+            // Reset button after delay
+            setTimeout(() => {
+                saveBtn.textContent = 'Save Settings';
+                saveBtn.disabled = false;
+                saveStatus.textContent = '';
+            }, 2000);
+
+        } catch (error) {
+            console.error('Error saving settings:', error);
+
+            saveBtn.textContent = 'Save Settings';
+            saveBtn.disabled = false;
+            saveStatus.textContent = `Error: ${error.message}`;
+            saveStatus.className = 'save-status error';
+
+            this.showMessage(`Error saving settings: ${error.message}`, 'error');
+        }
+    }
+
+    async autoSave() {
+        // Debounced auto-save
+        clearTimeout(this.autoSaveTimeout);
+        this.autoSaveTimeout = setTimeout(() => {
+            this.saveSettings();
+        }, 1000);
+    }
+
+    async testConnection() {
+        const testBtn = document.getElementById('testConnectionBtn');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const apiEndpoint = document.getElementById('apiEndpoint').value;
+
+        if (!apiEndpoint) {
+            this.showConnectionStatus('Please enter an API endpoint', 'error');
+            return;
+        }
+
+        if (!this.isValidUrl(apiEndpoint)) {
+            this.showConnectionStatus('Invalid URL format', 'error');
+            return;
+        }
+
+        // Show testing state
+        testBtn.disabled = true;
+        testBtn.textContent = 'Testing...';
+        this.showConnectionStatus('Testing connection...', 'testing');
+
+        try {
+            const response = await fetch(`${apiEndpoint}/api/health`, {
+                method: 'GET',
+                timeout: 10000
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.showConnectionStatus(
+                    `✓ Connected successfully (${data.status})`,
+                    'success'
+                );
+            } else {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+        } catch (error) {
+            let errorMessage = 'Connection failed';
+
+            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                errorMessage = 'Cannot reach server. Make sure the backend is running.';
+            } else if (error.message.includes('timeout')) {
+                errorMessage = 'Connection timeout. Server may be slow or unreachable.';
+            } else {
+                errorMessage = `Connection failed: ${error.message}`;
+            }
+
+            this.showConnectionStatus(`✗ ${errorMessage}`, 'error');
+
+        } finally {
+            testBtn.disabled = false;
+            testBtn.textContent = 'Test';
+        }
+    }
+
+    showConnectionStatus(message, type) {
+        const connectionStatus = document.getElementById('connectionStatus');
+        connectionStatus.textContent = message;
+        connectionStatus.className = `connection-status ${type}`;
+    }
+
+    validateApiEndpoint() {
+        const apiEndpoint = document.getElementById('apiEndpoint').value;
+        if (apiEndpoint && !this.isValidUrl(apiEndpoint)) {
+            this.showConnectionStatus('Invalid URL format', 'error');
+        } else {
+            document.getElementById('connectionStatus').style.display = 'none';
+        }
+    }
+
+    isValidUrl(string) {
+        try {
+            new URL(string);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+
+    async loadStats() {
+        try {
+            // Get history data
+            const historyResult = await chrome.storage.local.get(['factCheckHistory']);
+            const history = historyResult.factCheckHistory || [];
+
+            // Update display
+            document.getElementById('historyCount').textContent = history.length;
+            document.getElementById('totalFactChecks').textContent = history.length;
+
+        } catch (error) {
+            console.error('Error loading stats:', error);
+        }
+    }
+
+    async exportHistory() {
+        try {
+            const result = await chrome.storage.local.get(['factCheckHistory']);
+            const history = result.factCheckHistory || [];
+
+            if (history.length === 0) {
+                this.showMessage('No history to export', 'info');
+                return;
+            }
+
+            // Create CSV content
+            const csvContent = this.formatHistoryAsCSV(history);
+
+            // Create and download file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `athena-fact-check-history-${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            this.showMessage('History exported successfully', 'success');
+
+        } catch (error) {
+            console.error('Error exporting history:', error);
+            this.showMessage('Error exporting history', 'error');
+        }
+    }
+
+    formatHistoryAsCSV(history) {
+        const headers = ['Date', 'Text', 'Verdict', 'Confidence', 'URL', 'Duration (ms)'];
+        const csvRows = [headers.join(',')];
+
+        history.forEach(item => {
+            const row = [
+                `"${new Date(item.timestamp).toISOString()}"`,
+                `"${(item.text || '').replace(/"/g, '""')}"`,
+                `"${item.verdict || ''}"`,
+                item.confidence || 0,
+                `"${item.url || ''}"`,
+                item.duration || 0
+            ];
+            csvRows.push(row.join(','));
+        });
+
+        return csvRows.join('\n');
+    }
+
+    async clearHistory() {
+        if (!confirm('Are you sure you want to clear all fact-check history? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            await chrome.storage.local.remove(['factCheckHistory']);
+            await this.loadStats();
+            this.showMessage('History cleared successfully', 'success');
+
+        } catch (error) {
+            console.error('Error clearing history:', error);
+            this.showMessage('Error clearing history', 'error');
+        }
+    }
+
+    openHelp() {
+        const helpContent = `
+Athena Fact Checker Help
+
+GETTING STARTED:
+1. Set your API endpoint in the Connection Settings
+2. Test the connection to ensure your backend is running
+3. Configure your preferred behavior settings
+
+USING THE EXTENSION:
+• Click the Athena icon in your browser toolbar to open the popup
+• Select text on any webpage and right-click to fact-check
+• Use Ctrl+Shift+F to quickly fact-check selected text
+• Click "Analyze Page" to fact-check the main content of a page
+
+SETTINGS EXPLAINED:
+• API Endpoint: URL of your Athena backend server
+• Highlight Results: Show color-coded highlights on fact-checked text
+• Context Menu: Enable right-click menu for quick fact-checking
+• Auto Fact-Check: Automatically check claims as you browse (experimental)
+
+TROUBLESHOOTING:
+• Connection Failed: Ensure your backend server is running
+• No Results: Check that your API endpoint is correct
+• Extension Not Working: Try refreshing the page or restarting your browser
+
+For more help, check the documentation or report an issue.
         `;
-      }).join('');
 
-    } catch (error) {
-      console.error('Failed to load recent activity:', error);
-    }
-  }
-
-  async clearCache() {
-    try {
-      await chrome.runtime.sendMessage({ action: 'clearCache' });
-      this.showToast('Cache cleared successfully', 'success');
-      this.loadStats();
-    } catch (error) {
-      console.error('Failed to clear cache:', error);
-      this.showToast('Failed to clear cache', 'error');
-    }
-  }
-
-  async testConnection() {
-    const testButton = document.getElementById('testConnection');
-    const resultDiv = document.getElementById('connectionResult');
-
-    testButton.disabled = true;
-    testButton.textContent = 'Testing...';
-
-    resultDiv.className = 'connection-result testing';
-    resultDiv.textContent = 'Testing connection...';
-
-    try {
-      const response = await fetch(`${this.settings.apiEndpoint}/api/health`, {
-        method: 'GET',
-        timeout: 5000
-      });
-
-      if (response.ok) {
-        resultDiv.className = 'connection-result success';
-        resultDiv.textContent = 'Connection successful';
-        this.showToast('Connection test successful', 'success');
-      } else {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-    } catch (error) {
-      console.error('Connection test failed:', error);
-      resultDiv.className = 'connection-result error';
-      resultDiv.textContent = 'Connection failed';
-      this.showToast('Connection test failed', 'error');
+        alert(helpContent);
     }
 
-    testButton.disabled = false;
-    testButton.textContent = 'Test Connection';
-  }
+    reportIssue() {
+        const issueTemplate = `
+Please describe the issue you're experiencing:
 
-  viewHistory() {
-    // Create and show modal with full history
-    const modal = document.createElement('div');
-    modal.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    `;
+Steps to reproduce:
+1.
+2.
+3.
 
-    const historyContent = this.activities.map(activity => {
-      const isSupported = !activity.result?.is_fake;
-      const date = new Date(activity.timestamp).toLocaleString();
+Expected behavior:
 
-      return `
-        <div style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
-          <div style="font-weight: 500; margin-bottom: 4px;">${activity.text}</div>
-          <div style="font-size: 12px; color: #64748b;">
-            ${isSupported ? '✓ Supported' : '✗ Refuted'} •
-            ${this.formatDomain(activity.url)} •
-            ${date}
-          </div>
-        </div>
-      `;
-    }).join('');
 
-    modal.innerHTML = `
-      <div style="background: white; border-radius: 12px; max-width: 600px; max-height: 80vh; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.3);">
-        <div style="padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-          <h3>Activity History</h3>
-          <button onclick="this.closest('.modal').remove()" style="background: none; border: none; font-size: 20px; cursor: pointer;">×</button>
-        </div>
-        <div style="max-height: 400px; overflow-y: auto;">
-          ${historyContent || '<p style="padding: 20px; text-align: center; color: #64748b;">No activity found</p>'}
-        </div>
-      </div>
-    `;
+Actual behavior:
 
-    modal.className = 'modal';
-    document.body.appendChild(modal);
 
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) modal.remove();
-    });
-  }
+Extension version: 1.0.0
+Browser: ${navigator.userAgent}
+API Endpoint: ${document.getElementById('apiEndpoint').value}
 
-  async clearHistory() {
-    if (confirm('Are you sure you want to clear all activity history? This cannot be undone.')) {
-      try {
-        await chrome.storage.local.remove('athenaActivity');
-        this.activities = [];
-        this.loadRecentActivity();
-        this.loadStats();
-        this.showToast('History cleared successfully', 'success');
-      } catch (error) {
-        console.error('Failed to clear history:', error);
-        this.showToast('Failed to clear history', 'error');
-      }
-    }
-  }
+Additional information:
 
-  exportData() {
-    const data = {
-      settings: this.settings,
-      activities: this.activities,
-      timestamp: Date.now(),
-      version: '1.0.0'
-    };
+        `;
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `athena-data-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    URL.revokeObjectURL(url);
-    this.showToast('Data exported successfully', 'success');
-  }
-
-  importData() {
-    document.getElementById('importFile').click();
-  }
-
-  async handleFileImport(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    try {
-      const text = await file.text();
-      const data = JSON.parse(text);
-
-      if (data.settings) {
-        this.settings = { ...this.settings, ...data.settings };
-        await chrome.storage.sync.set({ athenaSettings: this.settings });
-        this.updateUI();
-      }
-
-      if (data.activities && Array.isArray(data.activities)) {
-        await chrome.storage.local.set({ athenaActivity: data.activities });
-        this.activities = data.activities;
-        this.loadRecentActivity();
-        this.loadStats();
-      }
-
-      this.showToast('Data imported successfully', 'success');
-
-    } catch (error) {
-      console.error('Import failed:', error);
-      this.showToast('Failed to import data', 'error');
+        // Open mailto with issue template
+        const subject = encodeURIComponent('Athena Fact Checker - Issue Report');
+        const body = encodeURIComponent(issueTemplate);
+        window.open(`mailto:support@athena.com?subject=${subject}&body=${body}`);
     }
 
-    // Reset file input
-    event.target.value = '';
-  }
+    openPrivacy() {
+        const privacyContent = `
+Athena Fact Checker Privacy Policy
 
-  checkWelcomeBanner() {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('welcome') === 'true') {
-      document.getElementById('welcomeBanner').classList.remove('hidden');
+DATA COLLECTION:
+• We only collect fact-check queries and results for functionality
+• No personal information is transmitted to external servers
+• All data is stored locally in your browser
+
+DATA USAGE:
+• Fact-check history is stored locally for your convenience
+• You can export or clear your data at any time
+• No data is shared with third parties
+
+API COMMUNICATION:
+• Extension communicates only with your configured backend server
+• Text you fact-check is sent to the API for analysis
+• Results are returned and stored locally
+
+YOUR RIGHTS:
+• Full control over your data through extension settings
+• Ability to export all your fact-check history
+• Option to clear all stored data at any time
+
+SECURITY:
+• All communication uses secure protocols when available
+• Local storage is encrypted by your browser
+• No tracking or analytics are performed
+
+For questions about privacy, contact: privacy@athena.com
+Last updated: ${new Date().toISOString().split('T')[0]}
+        `;
+
+        alert(privacyContent);
     }
-  }
 
-  dismissWelcome() {
-    document.getElementById('welcomeBanner').classList.add('hidden');
-
-    // Update URL
-    const url = new URL(window.location);
-    url.searchParams.delete('welcome');
-    window.history.replaceState({}, '', url);
-  }
-
-  openAbout() {
-    window.open('https://github.com/your-repo/athena#about', '_blank');
-  }
-
-  openHelp() {
-    window.open('https://github.com/your-repo/athena#help', '_blank');
-  }
-
-  openPrivacy() {
-    window.open('https://github.com/your-repo/athena/blob/main/PRIVACY.md', '_blank');
-  }
-
-  openGitHub() {
-    window.open('https://github.com/your-repo/athena', '_blank');
-  }
-
-  formatTimeAgo(timestamp) {
-    const now = Date.now();
-    const diff = now - timestamp;
-
-    const seconds = Math.floor(diff / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-
-    if (days > 0) return `${days}d ago`;
-    if (hours > 0) return `${hours}h ago`;
-    if (minutes > 0) return `${minutes}m ago`;
-    return 'Just now';
-  }
-
-  formatDomain(url) {
-    try {
-      return new URL(url).hostname;
-    } catch {
-      return 'Unknown';
+    openSourceCode() {
+        // Open source code repository
+        window.open('https://github.com/athena/fact-checker-extension', '_blank');
     }
-  }
 
-  showToast(message, type = 'info') {
-    const toastContainer = document.getElementById('toastContainer');
+    showMessage(text, type = 'info') {
+        const container = document.getElementById('messageContainer');
+        const message = document.createElement('div');
+        message.className = `message ${type}`;
+        message.textContent = text;
 
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
+        container.appendChild(message);
 
-    const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ';
-
-    toast.innerHTML = `
-      <span style="font-size: 16px;">${icon}</span>
-      <span>${message}</span>
-    `;
-
-    toastContainer.appendChild(toast);
-
-    // Remove after 3 seconds
-    setTimeout(() => {
-      toast.remove();
-    }, 3000);
-  }
+        // Remove message after 5 seconds
+        setTimeout(() => {
+            if (message.parentNode) {
+                message.parentNode.removeChild(message);
+            }
+        }, 5000);
+    }
 }
 
 // Initialize options page when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  new AthenaOptionsPage();
+    new AthenaOptions();
 });
