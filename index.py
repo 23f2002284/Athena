@@ -61,3 +61,6 @@ async def api_status():
             "status": "/api/status"
         }
     }
+
+# Export the app for Vercel
+# The app will be automatically detected by Vercel
