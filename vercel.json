@@ -2,7 +2,11 @@
   "builds": [
     {
       "src": "backend/main.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.9"
+      }
     }
   ],
   "routes": [
@@ -10,5 +14,12 @@
       "src": "/(.*)",
       "dest": "backend/main.py"
     }
-  ]
+  ],
+  "functions": {
+    "backend/main.py": {
+      "includeFiles": "backend/**",
+      "excludeFiles": "backend/logs/**"
+    }
+  },
+  "installCommand": "pip install -r vercel-requirements.txt"
 }

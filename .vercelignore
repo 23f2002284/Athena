@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+fact_checker_env/
+
+# Logs
+*.log
+logs/
+
+# Testing
+.pytest_cache/
+test_*.py
+*_test.py
+
+# Frontend (if deploying only backend)
+frontend/
+node_modules/
+package*.json
+
+# Browser extension
+browser-extension/
+
+# Other unnecessary files
+educational_tool/
+Claim_Handle/
+Claim_Verification/
+src/
+utils/
+*.md
+!backend/README.md
+*.txt
+*.html
+*.css
+*.js
+!backend/*.py
+
+# Git
+.git/
+.gitignore
+
+# Environment files
+*.env
+*.env.backup
+config.env*
+
+# Expo
+.expo/
+
+# Development files
+websocket_client.py
+log-cleaner.py
+setup_env.py
+test_env.py
+load_env.py
+
+# Data files
+reliable_sources.json
+
+# Installers and scripts
+backend/auto_installer.py
+backend/native_installer.py
+backend/install_athena_extension.bat
+backend/test_endpoint.py
