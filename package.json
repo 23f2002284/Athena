@@ -1,4 +1,9 @@
 {
+  "name": "athena-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "echo 'No build step needed for Python backend'"
+  },
   "dependencies": {
     "expo": "^53.0.22"
   }
