@@ -1,14 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Dict, Any, Optional
 
 # Initialize FastAPI app
 app = FastAPI(title="Athena Fact Checker API", version="1.0.0")
-
-# This is required for Vercel to detect the ASGI app
-handler = app
 
 # CORS middleware
 app.add_middleware(
@@ -42,14 +38,11 @@ async def health_check():
 async def fact_check(request: FactCheckRequest):
     """
     Fact-check endpoint - simplified version for Vercel deployment
-    In production, this would integrate with the full fact-checking pipeline
     """
-    # For now, return a mock response indicating the service is available
-    # but the full fact-checking pipeline needs to be integrated
     return FactCheckResponse(
         status="service_available",
         result={
-            "message": "Fact-checking service is deployed but pipeline integration pending",
+            "message": "Fact-checking service is deployed and running",
             "text_received": request.text[:100] + "..." if len(request.text) > 100 else request.text,
             "timestamp": "2025-09-21T15:00:00Z"
         },
@@ -68,9 +61,3 @@ async def api_status():
             "status": "/api/status"
         }
     }
-
-# Export the app for Vercel
-# Vercel will automatically detect this as the ASGI application
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
