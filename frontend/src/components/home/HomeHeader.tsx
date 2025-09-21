@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from 'react
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import api from '../../../services/apiClient';
 
 interface HomeHeaderProps {
   onNotificationPress?: () => void;
@@ -12,56 +13,276 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({ onNotificationPress }) =
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [showTooltip, setShowTooltip] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownloadExtension = async () => {
     try {
       if (Platform.OS === 'web') {
-        // For web platform, actually download the extension
+        // For web platform, use the new auto-installer
         Alert.alert(
-          'Download Browser Extension',
-          'Download the Athena browser extension to fact-check content on any website.\n\n' +
-          '• Select text on any webpage\n' +
-          '• Right-click for quick verification\n' +
-          '• Seamless integration with Chrome, Edge, and Brave',
+          'Install Athena Extension',
+          '🚀 Install the Athena browser extension with one click!\n\n' +
+          '✨ Features:\n' +
+          '• Real-time fact-checking on any website\n' +
+          '• Right-click context menu integration\n' +
+          '• Keyboard shortcuts (Ctrl+Shift+F)\n' +
+          '• Page content analysis\n' +
+          '• Source verification with confidence scores\n' +
+          '• Privacy-focused design',
           [
             {
-              text: 'Download Now',
-              onPress: async () => {
+              text: 'Auto Install 🚀',
+              onPress: () => {
                 try {
-                  // Create a temporary link to download the ZIP file
-                  const downloadUrl = 'http://localhost:8000/api/download-extension';
+                  // Create an HTML installer page with embedded instructions
+                  const installerHTML = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athena Extension Auto-Installer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .install-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+        .install-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .steps {
+            counter-reset: step-counter;
+        }
+        .step {
+            margin: 20px 0;
+            padding-left: 40px;
+            position: relative;
+            counter-increment: step-counter;
+        }
+        .step::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #667eea;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🔍</div>
+            <div class="title">Athena Extension Installer</div>
+            <div class="subtitle">One-click browser extension installation</div>
+        </div>
 
-                  // For web, create a temporary anchor to trigger download
+        <div style="text-align: center; margin: 20px 0;">
+            <button class="install-btn" onclick="downloadExtension()">
+                📦 Download Extension
+            </button>
+        </div>
+
+        <div class="steps">
+            <div class="step">Click the download button above to get the extension ZIP file</div>
+            <div class="step">Extract the ZIP file to a folder on your computer</div>
+            <div class="step">Open Chrome → Extensions (chrome://extensions/)</div>
+            <div class="step">Enable "Developer mode" (top right toggle)</div>
+            <div class="step">Click "Load unpacked" and select the extracted folder</div>
+            <div class="step">Pin Athena to your toolbar and start fact-checking!</div>
+        </div>
+    </div>
+
+    <script>
+        function downloadExtension() {
+            const apiUrl = '${process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/api/download-extension';
+            const link = document.createElement('a');
+            link.href = apiUrl;
+            link.download = 'athena-extension.zip';
+            link.click();
+        }
+    </script>
+</body>
+</html>`;
+
+                  // Open the installer in a new window
+                  const newWindow = window.open('', '_blank');
+                  if (newWindow) {
+                    newWindow.document.write(installerHTML);
+                    newWindow.document.close();
+                  } else {
+                    Alert.alert(
+                      'Popup Blocked',
+                      'Please allow popups for this site and try again.'
+                    );
+                  }
+                } catch (error) {
+                  console.error('Error opening auto-installer:', error);
+                  Alert.alert(
+                    'Error',
+                    'Unable to open auto-installer. Please try the manual download option.'
+                  );
+                }
+              }
+            },
+            {
+              text: 'Manual Download 📦',
+              onPress: async () => {
+                setIsDownloading(true);
+                try {
+                  console.log('Starting manual extension download...');
+
+                  // Use the API client to download the extension
+                  const blob = await api.downloadExtension();
+
+                  // Create a URL for the blob
+                  const url = window.URL.createObjectURL(blob);
+
+                  // Create a temporary anchor to trigger download
                   const link = document.createElement('a');
-                  link.href = downloadUrl;
+                  link.href = url;
                   link.download = 'athena-browser-extension.zip';
+                  link.style.display = 'none';
                   document.body.appendChild(link);
                   link.click();
                   document.body.removeChild(link);
 
-                  // Show installation instructions after download starts
+                  // Clean up the URL object
+                  window.URL.revokeObjectURL(url);
+
+                  console.log('Extension download initiated successfully');
+
+                  // Show installation instructions
                   setTimeout(() => {
                     Alert.alert(
-                      'Installation Instructions',
+                      'Manual Installation Guide',
+                      '📦 Download started!\n\n' +
+                      'Installation Steps:\n' +
                       '1. Extract the downloaded ZIP file\n' +
                       '2. Open Chrome → Extensions (chrome://extensions/)\n' +
-                      '3. Enable "Developer mode" (top right)\n' +
+                      '3. Enable "Developer mode" (top right toggle)\n' +
                       '4. Click "Load unpacked" and select the extracted folder\n' +
-                      '5. Start fact-checking on any website!\n\n' +
-                      'The extension connects to this same backend for analysis.',
+                      '5. Pin Athena to your toolbar\n\n' +
+                      '🚀 Start fact-checking on any website!',
                       [{ text: 'Got it!' }]
                     );
-                  }, 1000);
+                  }, 500);
+
                 } catch (downloadError) {
                   console.error('Download failed:', downloadError);
+
+                  const error = downloadError as Error;
+                  let errorMessage = 'Download failed. ';
+
+                  if (error.message?.includes('Network')) {
+                    errorMessage += 'Please check your internet connection.';
+                  } else if (error.message?.includes('timeout')) {
+                    errorMessage += 'Server timeout. Please try again.';
+                  } else {
+                    errorMessage += 'Server may be temporarily unavailable.';
+                  }
+
                   Alert.alert(
-                    'Download Instructions',
-                    'Automatic download failed. You can manually download by visiting:\n\n' +
-                    'http://localhost:8000/api/download-extension\n\n' +
-                    'Then follow the installation instructions.',
-                    [{ text: 'OK' }]
+                    'Download Error',
+                    errorMessage + '\n\n' +
+                    'Alternative options:\n' +
+                    '• Try the Auto Install option\n' +
+                    '• Visit: ' + `${process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/install`,
+                    [
+                      {
+                        text: 'Try Auto Install',
+                        onPress: () => {
+                          const installerUrl = `${process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/install`;
+                          window.open(installerUrl, '_blank');
+                        }
+                      },
+                      { text: 'Cancel', style: 'cancel' }
+                    ]
                   );
+                } finally {
+                  setIsDownloading(false);
                 }
+              }
+            },
+            {
+              text: 'Learn More ℹ️',
+              onPress: () => {
+                Alert.alert(
+                  'Athena Browser Extension',
+                  '🔍 Powerful Features:\n\n' +
+                  '• Instant fact-checking on any website\n' +
+                  '• Right-click context menu integration\n' +
+                  '• Keyboard shortcuts for quick access\n' +
+                  '• Automatic page content analysis\n' +
+                  '• Source verification with confidence scores\n' +
+                  '• Fact-check history and export\n' +
+                  '• Offline functionality after installation\n\n' +
+                  '🔒 Privacy & Security:\n' +
+                  '• No data collection or tracking\n' +
+                  '• All processing on your server\n' +
+                  '• Open source and transparent\n' +
+                  '• Secure, encrypted communication\n\n' +
+                  '💻 Browser Support:\n' +
+                  '• Chrome, Edge, Brave browsers\n' +
+                  '• Works on all websites\n' +
+                  '• Cross-platform compatibility',
+                  [
+                    {
+                      text: 'Install Now',
+                      onPress: () => {
+                        const installerUrl = `${process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/install`;
+                        window.open(installerUrl, '_blank');
+                      }
+                    }
+                  ]
+                );
               }
             },
             { text: 'Maybe Later', style: 'cancel' }
@@ -70,15 +291,35 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({ onNotificationPress }) =
       } else {
         // For mobile platforms, show appropriate message
         Alert.alert(
-          'Browser Extension',
-          'The Athena browser extension is available for desktop browsers like Chrome, Edge, and Brave.\n\n' +
-          'Visit this app on your computer to download the extension.',
-          [{ text: 'OK' }]
+          'Desktop Extension Available',
+          '🖥️ The Athena browser extension is designed for desktop browsers.\n\n' +
+          '📱 On mobile, you can:\n' +
+          '• Use this app for fact-checking\n' +
+          '• Copy/paste content to verify\n' +
+          '• Access the same AI-powered analysis\n' +
+          '• View detailed source verification\n\n' +
+          '💻 To get the browser extension:\n' +
+          'Visit this app on your computer for one-click installation.',
+          [{ text: 'Understood' }]
         );
       }
     } catch (error) {
-      console.error('Extension download error:', error);
-      Alert.alert('Error', 'Unable to initiate download at this time.');
+      console.error('Extension installation error:', error);
+      setIsDownloading(false);
+      Alert.alert(
+        'Error',
+        'Unable to start installation. Please ensure the backend server is running and try again.',
+        [
+          {
+            text: 'Try Direct Link',
+            onPress: () => {
+              const installerUrl = `${process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/install`;
+              window.open(installerUrl, '_blank');
+            }
+          },
+          { text: 'Cancel', style: 'cancel' }
+        ]
+      );
     }
   };
 
@@ -95,18 +336,34 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({ onNotificationPress }) =
         <View style={styles.rightButtons}>
           <View style={styles.tooltipContainer}>
             <TouchableOpacity
-              style={[styles.downloadButton, { backgroundColor: colors.card }]}
+              style={[
+                styles.downloadButton,
+                { backgroundColor: colors.card },
+                isDownloading && { opacity: 0.6 }
+              ]}
               onPress={handleDownloadExtension}
-              onPressIn={() => setShowTooltip(true)}
+              onPressIn={() => !isDownloading && setShowTooltip(true)}
               onPressOut={() => setShowTooltip(false)}
               activeOpacity={0.7}
+              disabled={isDownloading}
             >
-              <Ionicons name="download" size={20} color={colors.primary} />
+              <Ionicons
+                name={isDownloading ? "hourglass" : "download"}
+                size={20}
+                color={colors.primary}
+              />
             </TouchableOpacity>
-            {showTooltip && (
+            {showTooltip && !isDownloading && (
               <View style={[styles.tooltip, { backgroundColor: colors.text }]}>
                 <Text style={[styles.tooltipText, { color: colors.background }]}>
-                  Download Extension
+                  Install Extension
+                </Text>
+              </View>
+            )}
+            {isDownloading && (
+              <View style={[styles.tooltip, { backgroundColor: colors.primary }]}>
+                <Text style={[styles.tooltipText, { color: colors.background }]}>
+                  Processing...
                 </Text>
               </View>
             )}

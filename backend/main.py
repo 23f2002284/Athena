@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import os
+import platform
 import re
 import subprocess
 import sys
@@ -12,7 +13,7 @@ import time
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
+from fastapi.responses import JSONResponse, StreamingResponse, FileResponse, HTMLResponse
 from pydantic import BaseModel
 import uvicorn
 from watchfiles import awatch
@@ -23,8 +24,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Import fact-checker directly
 from fact_checker.agent import create_graph as create_fact_checker_graph
 
-# Import extension downloader
+# Import extension downloader and native installer
 from extension_download import extension_downloader
+from native_installer import native_installer
+from auto_installer import auto_installer
 
 # Global cache for fact-check results
 fact_check_results = {}
@@ -623,6 +626,108 @@ async def download_extension():
     except Exception as e:
         logging.error(f"Extension download error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to generate extension package: {str(e)}")
+
+@app.get("/api/extension-installer")
+async def extension_installer():
+    """Get the auto-installer HTML page for browser extensions"""
+    try:
+        installer_html = auto_installer.create_inline_installer()
+        return HTMLResponse(content=installer_html)
+    except Exception as e:
+        logging.error(f"Extension installer error: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Failed to create installer: {str(e)}"}
+        )
+
+@app.post("/api/auto-install-extension")
+async def auto_install_extension(request: dict):
+    """Attempt automatic extension installation"""
+    try:
+        method = request.get('method', 'devmode')
+
+        if method == 'native':
+            # Try native installation
+            result = native_installer.install_extension_automatically()
+            return result
+
+        elif method == 'devmode':
+            # For developer mode, create a special installation package
+            return {
+                "success": False,
+                "message": "Developer mode auto-install requires manual steps",
+                "instructions": [
+                    "Download and extract the extension",
+                    "Open chrome://extensions/",
+                    "Enable Developer mode",
+                    "Click 'Load unpacked'",
+                    "Select the extension folder"
+                ]
+            }
+
+        return {"success": False, "message": "Auto-installation method not supported"}
+
+    except Exception as e:
+        logging.error(f"Auto-install error: {str(e)}")
+        return {"success": False, "message": f"Auto-installation failed: {str(e)}"}
+
+@app.get("/api/download-installer")
+async def download_installer():
+    """Download native installer script"""
+    try:
+        script_path = native_installer.create_installer_script()
+
+        if not script_path or not os.path.exists(script_path):
+            raise HTTPException(status_code=500, detail="Failed to create installer script")
+
+        # Determine filename based on platform
+        filename = "install_athena_extension.bat" if platform.system() == "Windows" else "install_athena_extension.sh"
+
+        return FileResponse(
+            path=script_path,
+            filename=filename,
+            media_type="application/octet-stream",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}"
+            }
+        )
+    except Exception as e:
+        logging.error(f"Installer download error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate installer: {str(e)}")
+
+@app.get("/api/auto-install")
+async def get_auto_installer():
+    """Get the auto-installer HTML page"""
+    print("DEBUG: Auto-installer endpoint called!")
+    logging.info("Auto-installer endpoint accessed")
+    try:
+        installer_html = auto_installer.create_inline_installer()
+        print(f"DEBUG: Generated HTML length: {len(installer_html)}")
+        return HTMLResponse(content=installer_html)
+    except Exception as e:
+        print(f"DEBUG: Auto-installer error: {str(e)}")
+        logging.error(f"Auto-installer error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create auto-installer: {str(e)}")
+
+@app.get("/install")
+async def install_page():
+    """Alternative endpoint for the installer page"""
+    return await get_auto_installer()
+
+@app.get("/")
+async def serve_index():
+    """Serve the main index page"""
+    try:
+        index_path = Path(__file__).parent.parent / "index.html"
+        if index_path.exists():
+            return HTMLResponse(content=index_path.read_text(encoding='utf-8'))
+        else:
+            return HTMLResponse(content="""
+                <h1>Athena Fact Checker</h1>
+                <p>Backend is running. Download extension: <a href="/api/download-extension">Download</a></p>
+            """)
+    except Exception as e:
+        return HTMLResponse(content=f"<h1>Athena Backend</h1><p>Error: {e}</p>")
 
 @app.get("/api/health")
 async def health_check():

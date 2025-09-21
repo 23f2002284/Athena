@@ -1,302 +1,198 @@
-/* Athena Content Script Styles */
+/* Athena Fact Checker Content Styles */
 
-/* Prevent conflicts with page styles */
-.athena-tooltip,
-.athena-tooltip *,
-.athena-quick-result,
-.athena-quick-result * {
-  all: initial !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+.athena-fact-check-button {
+    position: absolute;
+    z-index: 10000;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    transition: all 0.2s ease;
+    user-select: none;
+    max-width: 200px;
 }
 
-/* Text highlighting */
+.athena-fact-check-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6);
+}
+
+.athena-button-content {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.athena-icon {
+    font-size: 16px;
+}
+
+.athena-text {
+    white-space: nowrap;
+}
+
+/* Text highlighting styles */
 .athena-highlight {
-  background-color: #fef3c7 !important;
-  color: #92400e !important;
-  padding: 2px 4px !important;
-  border-radius: 3px !important;
-  font-weight: inherit !important;
-  font-size: inherit !important;
-  font-family: inherit !important;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    position: relative;
 }
 
-/* Tooltip styles */
-.athena-tooltip {
-  position: absolute !important;
-  z-index: 999999 !important;
-  pointer-events: none !important;
-  user-select: none !important;
+.athena-highlight.athena-processing {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    animation: athena-pulse 1.5s infinite;
 }
 
-.athena-tooltip-content {
-  background: #1f2937 !important;
-  border-radius: 8px !important;
-  padding: 8px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-  pointer-events: auto !important;
-  position: relative !important;
-  animation: athena-fade-in 0.2s ease-out !important;
+.athena-highlight.athena-factual {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
 }
 
-.athena-fact-check-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  color: white !important;
-  border: none !important;
-  padding: 8px 12px !important;
-  border-radius: 6px !important;
-  cursor: pointer !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  font-size: 12px !important;
-  font-weight: 500 !important;
-  white-space: nowrap !important;
-  transition: all 0.2s ease !important;
-  text-decoration: none !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+.athena-highlight.athena-false {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
 }
 
-.athena-fact-check-btn:hover {
-  background: linear-gradient(135deg, #5a6fd8 0%, #6b5b95 100%) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+.athena-highlight.athena-result {
+    background-color: #e7f3ff;
+    border: 1px solid #b3d7ff;
+    color: #0066cc;
 }
 
-.athena-tooltip-arrow {
-  position: absolute !important;
-  bottom: -6px !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  width: 0 !important;
-  height: 0 !important;
-  border-left: 6px solid transparent !important;
-  border-right: 6px solid transparent !important;
-  border-top: 6px solid #1f2937 !important;
+/* Pulse animation for processing */
+@keyframes athena-pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
 }
 
-/* Quick result styles */
-.athena-quick-result {
-  position: fixed !important;
-  z-index: 999998 !important;
-  max-width: 300px !important;
-  min-width: 250px !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
-  border-radius: 12px !important;
-  overflow: hidden !important;
-  backdrop-filter: blur(10px) !important;
-  animation: athena-slide-up 0.3s ease-out !important;
+/* Processing indicator */
+.athena-processing-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10001;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    max-width: 280px;
+    display: none;
 }
 
-.athena-result-content {
-  background: white !important;
-  border: 1px solid #e5e7eb !important;
-  padding: 16px !important;
-  color: #1f2937 !important;
-  position: relative !important;
+.athena-processing-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-.athena-result-content.loading {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  color: #6b7280 !important;
-  justify-content: center !important;
-}
-
-.athena-result-content.error {
-  background: #fef2f2 !important;
-  border-color: #fecaca !important;
-  color: #dc2626 !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-}
-
-.athena-result-content.supported {
-  border-left: 4px solid #16a34a !important;
-  background: #f0fdf4 !important;
-}
-
-.athena-result-content.refuted {
-  border-left: 4px solid #dc2626 !important;
-  background: #fef2f2 !important;
-}
-
-.athena-loading-spinner {
-  width: 16px !important;
-  height: 16px !important;
-  border: 2px solid #e5e7eb !important;
-  border-top: 2px solid #667eea !important;
-  border-radius: 50% !important;
-  animation: athena-spin 1s linear infinite !important;
-  display: inline-block !important;
-}
-
-.athena-result-header {
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  margin-bottom: 8px !important;
-}
-
-.athena-verdict {
-  font-weight: 600 !important;
-  font-size: 14px !important;
-  color: inherit !important;
-}
-
-.athena-confidence {
-  font-weight: 700 !important;
-  color: #667eea !important;
-  font-size: 13px !important;
-}
-
-.athena-result-text {
-  font-size: 13px !important;
-  line-height: 1.4 !important;
-  margin-bottom: 12px !important;
-  color: #4b5563 !important;
-  word-wrap: break-word !important;
-  overflow-wrap: break-word !important;
-}
-
-.athena-result-actions {
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  padding-top: 8px !important;
-  border-top: 1px solid #e5e7eb !important;
-}
-
-.athena-details-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  color: white !important;
-  border: none !important;
-  padding: 6px 12px !important;
-  border-radius: 4px !important;
-  font-size: 12px !important;
-  cursor: pointer !important;
-  font-weight: 500 !important;
-  transition: all 0.2s ease !important;
-  text-decoration: none !important;
-}
-
-.athena-details-btn:hover {
-  background: linear-gradient(135deg, #5a6fd8 0%, #6b5b95 100%) !important;
-  transform: translateY(-1px) !important;
-}
-
-.athena-close-btn {
-  background: none !important;
-  border: none !important;
-  font-size: 18px !important;
-  color: #9ca3af !important;
-  cursor: pointer !important;
-  padding: 4px !important;
-  line-height: 1 !important;
-  border-radius: 50% !important;
-  width: 24px !important;
-  height: 24px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  transition: all 0.2s ease !important;
-}
-
-.athena-close-btn:hover {
-  color: #6b7280 !important;
-  background: #f3f4f6 !important;
-}
-
-/* Animations */
-@keyframes athena-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes athena-slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+.athena-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #667eea;
+    border-radius: 50%;
+    animation: athena-spin 1s linear infinite;
 }
 
 @keyframes athena-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Tooltip styles for highlighted text */
+.athena-highlight:hover::after {
+    content: "Fact-checked by Athena";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 10002;
+    margin-bottom: 5px;
+    pointer-events: none;
+}
+
+.athena-highlight:hover::before {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #333;
+    z-index: 10002;
+    pointer-events: none;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .athena-fact-check-button {
+        font-size: 12px;
+        padding: 6px 12px;
+        max-width: 150px;
+    }
+
+    .athena-processing-indicator {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
 }
 
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
-  .athena-result-content {
-    background: #1f2937 !important;
-    border-color: #374151 !important;
-    color: #f9fafb !important;
-  }
+    .athena-processing-indicator {
+        background: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
 
-  .athena-result-content.supported {
-    background: #064e3b !important;
-    border-color: #065f46 !important;
-  }
+    .athena-highlight.athena-factual {
+        background-color: #2d5a3d;
+        border-color: #38a169;
+        color: #9ae6b4;
+    }
 
-  .athena-result-content.refuted {
-    background: #7f1d1d !important;
-    border-color: #991b1b !important;
-  }
+    .athena-highlight.athena-false {
+        background-color: #5a2d2d;
+        border-color: #e53e3e;
+        color: #feb2b2;
+    }
 
-  .athena-result-content.error {
-    background: #7f1d1d !important;
-    border-color: #991b1b !important;
-  }
-
-  .athena-result-text {
-    color: #d1d5db !important;
-  }
-
-  .athena-result-actions {
-    border-color: #374151 !important;
-  }
+    .athena-highlight.athena-result {
+        background-color: #2d3f5a;
+        border-color: #4299e1;
+        color: #90cdf4;
+    }
 }
 
-/* High contrast mode */
-@media (prefers-contrast: high) {
-  .athena-tooltip-content {
-    border: 2px solid #000 !important;
-  }
-
-  .athena-result-content {
-    border: 2px solid #000 !important;
-  }
-
-  .athena-fact-check-btn,
-  .athena-details-btn {
-    border: 1px solid #000 !important;
-  }
-}
-
-/* Reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  .athena-tooltip-content,
-  .athena-quick-result,
-  .athena-fact-check-btn,
-  .athena-details-btn,
-  .athena-close-btn {
-    animation: none !important;
-    transition: none !important;
-  }
-
-  .athena-loading-spinner {
-    animation: none !important;
-    border-top: 2px solid #667eea !important;
-  }
+/* Prevent conflicts with existing styles */
+.athena-fact-check-button,
+.athena-processing-indicator,
+.athena-highlight {
+    box-sizing: border-box !important;
+    line-height: normal !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+    text-decoration: none !important;
 }

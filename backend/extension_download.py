@@ -52,9 +52,20 @@ class ExtensionDownloader:
             "INSTALL.md": self._get_install_instructions()
         }
 
-        # Add files to ZIP
+        # Add text files to ZIP
         for file_path, content in files_to_add.items():
             zipf.writestr(file_path, content)
+
+        # Add binary icon files if they exist
+        icon_files = ["icon16.png", "icon32.png", "icon48.png", "icon128.png"]
+        for icon_file in icon_files:
+            icon_path = self.extension_path / "icons" / icon_file
+            if icon_path.exists():
+                zipf.write(icon_path, f"icons/{icon_file}")
+            else:
+                # Add a placeholder or error message if icons don't exist
+                zipf.writestr(f"icons/MISSING_{icon_file}.txt",
+                    f"ERROR: {icon_file} is missing. Please generate icons using icons/create-icons.html")
 
     def _get_manifest_content(self):
         """Get manifest.json content"""
@@ -112,7 +123,7 @@ class ExtensionDownloader:
 
   "web_accessible_resources": [
     {
-      "resources": ["icons/*", "popup/*"],
+      "resources": ["icons/*", "popup/*", "README.md"],
       "matches": ["<all_urls>"]
     }
   ]
