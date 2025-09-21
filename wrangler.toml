@@ -1,0 +1,12 @@
+name = "athena-fact-checker"
+compatibility_date = "2023-12-01"
+
+[env.production]
+name = "athena-fact-checker-prod"
+
+[build]
+command = "echo 'No build step required'"
+
+[vars]
+ENVIRONMENT = "production"
+API_VERSION = "1.0.0"
